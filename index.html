@@ -926,7 +926,7 @@ function renderHome(){
   document.getElementById('user-chip').textContent=(cfg.name||'Config')+' ⚙';
 
   // Mode badges
-  document.getElementById('badge-flash').textContent=due.length+' vencidos';
+  document.getElementById('badge-flash').textContent=due.length>0?due.length+' sugeridos hoje':'todos em dia';
   const simqs=getSimQs();
   document.getElementById('badge-sim').textContent=simqs.length+' questões';
 
@@ -952,9 +952,9 @@ function renderHome(){
     el.innerHTML=`<div class="deck-ic">${info.ic}</div>
       <div class="deck-info">
         <div class="deck-name">Seção ${sec} — ${info.n}</div>
-        <div class="deck-meta">${sc.length} cards · ${avail.length} disponíveis</div>
+        <div class="deck-meta">${avail.length} cards · ${sd>0?sd+' sugeridos hoje':'todos revisados'}</div>
       </div>
-      <div class="due-pill ${sd===0?'ok':''}">${sd===0?'✓ dia':sd+' hoje'}</div>`;
+      <div class="due-pill ${sd===0?'ok':''}">${sd===0?'✓':sd+' 📅'}</div>`;
     list.appendChild(el);
   });
 }
@@ -964,13 +964,17 @@ function renderHome(){
 // ═══════════════════════════════════════
 let sQ=[],sI=0,sSt={e:0,m:0,h:0},flipped=false;
 
-function startStudy(sec){
+function startStudy(sec,forceAll){
   const cards=getCards();
-  let pool=sec==='all'
-    ?cards.filter(c=>isWeekAvailable(c)&&isDue(c.id))
-    :cards.filter(c=>c.section===sec&&isWeekAvailable(c)&&isDue(c.id));
-  if(!pool.length){alert('Nenhum card vencido'+(sec!=='all'?' nessa seção':'')+' disponível agora.');return;}
-  pool=pool.sort(()=>Math.random()-.5);
+  // Due cards first, then the rest — SM-2 is a suggestion, not a lock
+  const allPool=sec==='all'
+    ?cards.filter(c=>isWeekAvailable(c))
+    :cards.filter(c=>c.section===sec&&isWeekAvailable(c));
+  if(!allPool.length){alert('Sem cards nessa seção ainda.');return;}
+  const due=allPool.filter(c=>isDue(c.id));
+  const notDue=allPool.filter(c=>!isDue(c.id));
+  // Due cards first (shuffled), then not-due (shuffled)
+  let pool=[...due.sort(()=>Math.random()-.5),...notDue.sort(()=>Math.random()-.5)];
   sQ=pool;sI=0;sSt={e:0,m:0,h:0};
   document.getElementById('study-ttl').textContent=sec==='all'?'Revisão geral':'Seção '+sec;
   document.getElementById('done').classList.remove('show');
@@ -998,6 +1002,12 @@ function renderCard(){
     tagEl.innerHTML+=`<span class="ctag-edital ${ec}">${c.edital}</span>`;
   }
   if(c.dificuldade) tagEl.innerHTML+=`<span class="ctag-item">${c.dificuldade}</span>`;
+  // SM-2 suggestion indicator (non-blocking)
+  if(!isDue(c.id)){
+    const cp=getCP(c.id);
+    const daysLeft=Math.ceil((cp.next-Date.now())/86400000);
+    tagEl.innerHTML+=`<span class="ctag-item" style="color:var(--muted);opacity:.6">📅 +${daysLeft}d</span>`;
+  }
 
   document.getElementById('c-front').textContent=c.front;
   document.getElementById('c-back').textContent=c.back;
