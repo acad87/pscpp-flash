@@ -433,7 +433,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.16</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.17</span></div>
     <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
   </div>
   <div class="scroll pb" id="home-scroll">
@@ -642,10 +642,10 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
       <div>
         <div class="flabel">Trimestre</div>
         <select id="add-trim">
-          <option value="T1">T1 (Mai–Jul)</option>
-          <option value="T2">T2 (Ago–Nov)</option>
-          <option value="T3">T3 (Dez–Mar)</option>
-          <option value="T4">T4 (Abr–Ago)</option>
+          <option value="T1">T1 (Jun–Ago)</option>
+          <option value="T2">T2 (Set–Dez)</option>
+          <option value="T3">T3 (Jan–Abr)</option>
+          <option value="T4">T4 (Mai–Ago)</option>
         </select>
       </div>
     </div>
@@ -789,16 +789,16 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
       </div>
       <div class="cfg-row">
         <label>Semana atual do plano</label>
-        <div class="cfg-hint">Semana 01 = Mai/2026. Flashcards só aparecem a partir da semana em que foram criados.</div>
+        <div class="cfg-hint">Semana 01 = Jun/2026. Flashcards só aparecem a partir da semana em que foram criados.</div>
         <select id="cfg-week"><!-- generated --></select>
       </div>
       <div class="cfg-row">
         <label>Trimestre atual</label>
         <select id="cfg-trim-cur">
-          <option value="T1">T1 — Fase 1 (Mai–Jul 2026)</option>
-          <option value="T2">T2 — Fase 2 (Ago–Nov 2026)</option>
-          <option value="T3">T3 — Fase 3 (Dez 2026–Mar 2027)</option>
-          <option value="T4">T4 — Fase 4 (Abr–Ago 2027)</option>
+          <option value="T1">T1 — Fase 1 (Jun–Ago 2026)</option>
+          <option value="T2">T2 — Fase 2 (Set–Dez 2026)</option>
+          <option value="T3">T3 — Fase 3 (Jan–Abr 2027)</option>
+          <option value="T4">T4 — Fase 4 (Mai–Ago 2027)</option>
         </select>
       </div>
     </div>
@@ -859,21 +859,21 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
       <div class="modal-option-ic">📝</div>
       <div class="modal-option-txt">
         <div class="modal-option-title" style="color:var(--purple)">T1 — Fase 1</div>
-        <div class="modal-option-desc">Cards das semanas 1–13 (Mai–Jul 2026)</div>
+        <div class="modal-option-desc">Cards das semanas 1–13 (Jun–Ago 2026)</div>
       </div>
     </div>
     <div class="modal-option" onclick="startTrim('T2')">
       <div class="modal-option-ic">📝</div>
       <div class="modal-option-txt">
         <div class="modal-option-title" style="color:var(--purple)">T2 — Fases 1+2</div>
-        <div class="modal-option-desc">Cards das semanas 1–26 (Mai–Nov 2026)</div>
+        <div class="modal-option-desc">Cards das semanas 1–26 (Jun–Dez 2026)</div>
       </div>
     </div>
     <div class="modal-option" onclick="startTrim('T3')">
       <div class="modal-option-ic">📝</div>
       <div class="modal-option-txt">
         <div class="modal-option-title" style="color:var(--purple)">T3 — Fases 1+2+3</div>
-        <div class="modal-option-desc">Cards das semanas 1–39 (Mai 2026–Mar 2027)</div>
+        <div class="modal-option-desc">Cards das semanas 1–39 (Jun 2026–Abr 2027)</div>
       </div>
     </div>
     <div class="modal-option" onclick="startTrim('T4')">
