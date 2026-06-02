@@ -433,7 +433,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.15</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.16</span></div>
     <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
   </div>
   <div class="scroll pb" id="home-scroll">
@@ -1879,7 +1879,7 @@ async function genFlash(){
     const cards=parseJSON(raw);
     pending=cards.map(c=>({
       id:'c_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
-      section:fields.section,
+      section:c.section||fields.section, // use API-detected section if available
       semana:fields.semana,
       trimestre:fields.trimestre,
       edital:fields.edital,
@@ -1901,75 +1901,31 @@ function buildFlashPrompt(fields){
 
 Gere 5-15 flashcards de alta qualidade no estilo exato das provas PSCPP 2011/2012.
 
-SEÇÃO: ${fields.section}
-EDITAL: ${fields.edital} (${fields.edital==='2025'?'conteúdo novo, nunca testado em prova anterior':fields.edital==='2012'?'conteúdo histórico validado':'"AMBOS" — aparece em ambos os editais'})
+SEÇÃO SUGERIDA: ${fields.section} (detecte automaticamente a seção correta para cada card)
+EDITAL: ${fields.edital}
 MATERIAL: ${fields.material||'não especificado'}
 
+CLASSIFICAÇÃO DE SEÇÕES DO PSCPP:
+I = Manobrabilidade (propulsão, hélice, leme, curva de giro, squat, bank effects, resistência, PNA)
+II = Arte Naval (casco, conveses, estrutura, nomenclatura naval, amarração, atracação, fundeio, rebocadores, Fonseca)
+III = Navegação (cartas náuticas, marés, radar, ECDIS, AIS, posicionamento, Bridge Team, Miguens)
+IV = Legislação (COLREG, RIPEAM, NORMAM, LESTA, praticagem, Tribunal Marítimo)
+V = Meteorologia (meteorologia, ondas, ciclones, correntes oceânicas)
+VI = Comunicações (CIS, SMCP, GMDSS, NAVTEX, INMARSAT, DSC, bandeiras)
+VII = Conhecimentos Gerais (portos, economia marítima, planejamento portuário, MARPOL)
+
 REGRAS OBRIGATÓRIAS:
-- Frente: situação prática real (citar navio, prático, porto, cenário) — NUNCA definição abstrata
+- Detecte a seção correta de cada card pelo conteúdo — ignore a seção sugerida se não corresponder
+- Para conteúdo misto use a seção dominante do card
+- Frente: situação prática real — NUNCA definição abstrata
 - Verso: resposta completa com artigo/capítulo exato e porquê
-- Fonte: citar livro + edição + capítulo/artigo (ex: "Crenshaw Naval Shiphandling 4ª ed. Cap.3")
-- dificuldade: BÁSICA | INTERMEDIÁRIA | AVANÇADA
-- resultado_sessao: DÚVIDA (padrão)
+- Fonte: citar livro + edição + capítulo/artigo exato
+- dificuldade: BASICA | INTERMEDIARIA | AVANCADA
+- resultado_sessao: DUVIDA (padrão)
+- O campo section é OBRIGATÓRIO em cada card
 
 Responda APENAS JSON array sem nenhum texto adicional:
-[{"front":"situação prática...","back":"resposta+norma+porquê...","source":"fonte exata","dificuldade":"INTERMEDIÁRIA","resultado_sessao":"DÚVIDA"}]`;
-}
-
-async function genSim(){
-  const fields=getAddFields();
-  const text=document.getElementById('add-text').value.trim();
-  const cfg=getCfg();
-  if(!cfg.apiKey){alert('Configure a chave API em Config.');showCfg();return;}
-  if(!text&&!photoBase64){alert('Cole um texto ou tire uma foto primeiro.');return;}
-
-  // Try template parse for MC questions
-  if(text&&text.includes('---Q---')){
-    const parsed=parseTemplate(text,fields);
-    if(parsed&&parsed.length){
-      const mcCards=parsed.filter(p=>p.options.length>=2);
-      if(mcCards.length){
-        const newQs=mcCards.map(p=>createSimQ(p,fields));
-        const existing=getSimQs();
-        set(K.simq,[...existing,...newQs]);
-        alert(`✓ ${newQs.length} questão(ões) de simulado salva(s)!`);
-        clearPrev();return;
-      }
-    }
-  }
-
-  const ind=document.getElementById('gen-ind');const btn=event.target;
-  ind.classList.add('on');btn.disabled=true;
-  try{
-    const systemPrompt=buildSimPrompt(fields);
-    let messages;
-    if(photoBase64){
-      messages=[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoBase64}},
-        {type:'text',text:systemPrompt}
-      ]}];
-    }else{
-      messages=[{role:'user',content:systemPrompt+'\n\nTEXTO:\n'+text}];
-    }
-    const raw=await callClaude(messages,3000);
-    const qs=parseJSON(raw);
-    const existing=getSimQs();
-    const newQs=qs.map(q=>({
-      ...q,
-      id:'sq_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
-      section:q.section||fields.section,
-      secao:q.section||fields.section,
-      semana:fields.semana,
-      trimestre:fields.trimestre,
-      edital:fields.edital,
-      dificuldade:q.dificuldade||'INTERMEDIÁRIA'
-    }));
-    set(K.simq,[...existing,...newQs]);
-    alert(`✓ ${newQs.length} questão(ões) de simulado salva(s)!`);
-    document.getElementById('add-text').value='';
-    photoBase64=null;document.getElementById('photo-preview').style.display='none';
-  }catch(e){alert('Erro: '+e.message);}
-  finally{ind.classList.remove('on');btn.disabled=false;}
+[{"front":"...","back":"...","source":"...","dificuldade":"INTERMEDIARIA","resultado_sessao":"DUVIDA","section":"II"}]`;
 }
 
 function buildSimPrompt(fields){
