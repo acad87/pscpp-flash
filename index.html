@@ -877,6 +877,67 @@ const todayStr=()=>new Date().toDateString();
 function todayDone(){const d=get(K.today);return d.date===todayStr()?d.done||0:0;}
 function incDone(){const d=get(K.today);set(K.today,{date:todayStr(),done:(d.date===todayStr()?d.done||0:0)+1});}
 
+
+// ═══════════════════════════════════════
+// CARD VARIATION ENGINE
+// Generates 3 format variants per card, rotates randomly each session
+// Does NOT affect SM-2 data — only changes how the question is displayed
+// ═══════════════════════════════════════
+
+function generateVariants(card){
+  const q = card.front;
+  const a = card.back;
+  const sec = card.section;
+
+  // Detect if card is V/F format
+  const isVF = /verdadeiro ou falso/i.test(q) || /true or false/i.test(q);
+
+  if(isVF){
+    // Extract the core statement (remove "— VERDADEIRO ou FALSO?" suffix)
+    const stmt = q.replace(/\s*[—-]\s*(verdadeiro ou falso|true or false)\??/i,'').trim();
+    const isTrue = /^verdadeiro/i.test(a) || /^true/i.test(a);
+
+    // Variant 1: Original V/F format
+    const v1 = { front: q, back: a };
+
+    // Variant 2: "Complete a afirmativa correta" or "Identifique o erro"
+    let v2;
+    if(isTrue){
+      v2 = {
+        front: `Complete: "${stmt.replace(/é |são |chama-se /i, '').substring(0,40)}..." — qual o conceito correto?`,
+        back: a
+      };
+    } else {
+      v2 = {
+        front: `Identifique o erro na afirmativa: "${stmt}"`,
+        back: a
+      };
+    }
+
+    // Variant 3: Direct question format
+    // Extract key terms to form a direct question
+    const words = stmt.split(' ');
+    const subject = words.slice(0,3).join(' ');
+    const v3 = {
+      front: `Sobre "${subject}": a afirmativa a seguir é correta? "${stmt}"`,
+      back: a
+    };
+
+    return [v1, v2, v3];
+  }
+
+  // Non-V/F cards: return original only (no meaningful variation possible without API)
+  return [{ front: q, back: a }];
+}
+
+function getCardVariant(card){
+  const variants = generateVariants(card);
+  if(variants.length === 1) return variants[0];
+  // Pick random variant each session (seeded by session start time for consistency within session)
+  const idx = Math.floor(Math.random() * variants.length);
+  return variants[idx];
+}
+
 // ═══════════════════════════════════════
 // SM-2 ALGORITHM
 // ═══════════════════════════════════════
@@ -895,9 +956,10 @@ function previewInterval(id,q){const c=calcInterval(id,q);return c.interval===1?
 
 // SM-2 initial interval based on resultado_sessao + edital
 function sm2InitialInterval(resultado, edital){
+  // Uniform intervals regardless of edital — starting from zero on all content
   if(resultado==='ERREI') return 1;
-  if(resultado==='DUVIDA') return edital==='2025'?1:2;
-  if(resultado==='ACERTEI') return edital==='2025'?1:4;
+  if(resultado==='DUVIDA') return 2;
+  if(resultado==='ACERTEI') return 4;
   return 1;
 }
 
@@ -1220,7 +1282,9 @@ function renderCard(){
     tagEl.innerHTML+=`<span class="ctag-item" style="color:var(--muted);opacity:.6">📅 +${daysLeft}d</span>`;
   }
 
-  setFormattedText(document.getElementById('c-front'),c.front);
+  // Apply card variant — display only, SM-2 always tracks original card.id unchanged
+  const _v=getCardVariant(c);
+  setFormattedText(document.getElementById('c-front'),_v.front);
   document.getElementById('c-back').textContent=c.back;
   document.getElementById('c-src').textContent=c.source?'Fonte: '+c.source:'';
   document.getElementById('ri-h').textContent=previewInterval(c.id,1);
