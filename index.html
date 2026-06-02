@@ -272,6 +272,33 @@ body::before{content:'';position:fixed;inset:0;background:
 .evoc-count.ok{color:var(--muted)}
 
 
+
+/* ── SESSION LOG */
+.slog-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.slog-hdr{padding:10px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3)}
+.slog-row{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.slog-row:last-child{border-bottom:none}
+.slog-row:hover{background:var(--bg3)}
+.slog-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.slog-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.slog-score{font-family:'Syne',sans-serif;font-size:13px;font-weight:700}
+.slog-bar{display:flex;height:4px;border-radius:2px;overflow:hidden;gap:1px;margin-bottom:6px}
+.slog-bar-e{background:var(--green)}
+.slog-bar-m{background:var(--amber)}
+.slog-bar-h{background:var(--red)}
+.slog-pills{display:flex;gap:6px;flex-wrap:wrap}
+.slog-pill{font-family:'DM Mono',monospace;font-size:9px;padding:2px 7px;border-radius:5px}
+.slog-pill-e{background:#10b98118;color:var(--green)}
+.slog-pill-m{background:#f59e0b18;color:var(--amber)}
+.slog-pill-h{background:#ef444418;color:var(--red)}
+.slog-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.slog-row.open .slog-detail{display:block}
+.slog-weak-item{font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.4}
+.slog-weak-item:last-child{border-bottom:none}
+.slog-weak-lbl{font-family:'DM Mono',monospace;font-size:9px;margin-bottom:2px}
+.slog-weak-lbl.err{color:var(--red)}
+.slog-weak-lbl.duv{color:var(--amber)}
+
 /* ── SESSION HISTORY */
 .sh-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
 .sh-hdr{padding:10px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:space-between}
@@ -406,7 +433,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.14</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.15</span></div>
     <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
   </div>
   <div class="scroll pb" id="home-scroll">
@@ -865,7 +892,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 // ═══════════════════════════════════════
 // STORAGE
 // ═══════════════════════════════════════
-const K={cards:'pscpp_c',prog:'pscpp_p',cfg:'pscpp_cfg',today:'pscpp_t',simq:'pscpp_sq',trim:'pscpp_tr',sh:'pscpp_sh'};
+const K={cards:'pscpp_c',prog:'pscpp_p',cfg:'pscpp_cfg',today:'pscpp_t',simq:'pscpp_sq',trim:'pscpp_tr',sh:'pscpp_sh',log:'pscpp_log'};
 function get(k){try{const v=localStorage.getItem(k);if(!v)return(['pscpp_c','pscpp_sq','pscpp_tr'].includes(k)?[]:{});return JSON.parse(v);}catch{return(['pscpp_c','pscpp_sq','pscpp_tr'].includes(k)?[]:{});}}
 const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 const getCards=()=>get(K.cards);
@@ -1338,9 +1365,23 @@ function finishStudy(){
     retryBtn.style.display='none';
   }
 
-  // Save session history
-  const sh={date:new Date().toISOString(),weak:sWeak.map(w=>({id:w.card.id,rating:w.rating,front:w.card.front,back:w.card.back,section:w.card.section}))};
-  set(K.sh,sh);
+  // Save session — both current (sh) and persistent log
+  const _now=new Date().toISOString();
+  const _session={
+    date:_now,
+    total:sQ.length,
+    easy:sSt.e,
+    doubt:sSt.m,
+    wrong:sSt.h,
+    section:sQ[0]?sQ[0].section:'',
+    weak:sWeak.map(w=>({id:w.card.id,rating:w.rating,front:w.card.front,back:w.card.back,section:w.card.section}))
+  };
+  set(K.sh,_session);
+  // Append to persistent log (keep last 50 sessions)
+  const _log=get(K.log)||[];
+  _log.unshift(_session);
+  if(_log.length>50)_log.pop();
+  set(K.log,_log);
 
   document.getElementById('done').classList.add('show');
   document.getElementById('bnav').style.display='flex';
@@ -2139,6 +2180,59 @@ function renderDash(){
   });
 
   // Trim history
+  // Session log
+  const _slog=get(K.log)||[];
+  if(_slog.length){
+    const slogLabel=document.createElement('div');
+    slogLabel.className='slabel';slogLabel.textContent='Histórico de sessões';
+    cont.appendChild(slogLabel);
+    const slogWrap=document.createElement('div');slogWrap.className='slog-wrap';
+    const slogHdr=document.createElement('div');
+    slogHdr.className='slog-hdr';
+    slogHdr.textContent=`${_slog.length} sessão${_slog.length!==1?'ões':''} registrada${_slog.length!==1?'s':''}`;
+    slogWrap.appendChild(slogHdr);
+    _slog.forEach(s=>{
+      const d=new Date(s.date);
+      const dateStr=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const tot=s.total||0;
+      const pct=tot?Math.round(s.easy/tot*100):0;
+      const color=pct>=80?'var(--green)':pct>=60?'var(--amber)':'var(--red)';
+      const ePct=tot?Math.round(s.easy/tot*100):0;
+      const mPct=tot?Math.round(s.doubt/tot*100):0;
+      const hPct=tot?Math.round(s.wrong/tot*100):0;
+      const row=document.createElement('div');row.className='slog-row';
+      let weakHtml='';
+      if(s.weak&&s.weak.length){
+        weakHtml=`<div class="slog-detail">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-bottom:6px">PARA REFORÇAR (${s.weak.length})</div>
+          ${s.weak.map(w=>`<div class="slog-weak-item">
+            <div class="slog-weak-lbl ${w.rating===1?'err':'duv'}">${w.rating===1?'✗ ERREI':'⚠ DÚVIDA'} · Seção ${w.section}</div>
+            ${w.front}
+          </div>`).join('')}
+        </div>`;
+      }
+      row.innerHTML=`<div class="slog-top">
+        <span class="slog-date">${dateStr} · Seção ${s.section||'—'}</span>
+        <span class="slog-score" style="color:${color}">${pct}% fáceis</span>
+      </div>
+      <div class="slog-bar">
+        <div class="slog-bar-e" style="width:${ePct}%"></div>
+        <div class="slog-bar-m" style="width:${mPct}%"></div>
+        <div class="slog-bar-h" style="width:${hPct}%"></div>
+      </div>
+      <div class="slog-pills">
+        <span class="slog-pill slog-pill-e">✓ ${s.easy} fáceis</span>
+        <span class="slog-pill slog-pill-m">⚠ ${s.doubt} dúvidas</span>
+        <span class="slog-pill slog-pill-h">✗ ${s.wrong} erros</span>
+        <span class="slog-pill" style="background:var(--bg3);color:var(--muted)">${tot} total</span>
+      </div>
+      ${weakHtml}`;
+      row.onclick=()=>row.classList.toggle('open');
+      slogWrap.appendChild(row);
+    });
+    cont.appendChild(slogWrap);
+  }
+
   if(trimHist.length){
     const hdiv=document.createElement('div');
     hdiv.innerHTML='';
@@ -2186,7 +2280,8 @@ function doExport(){
   const data={
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
-    exportDate:new Date().toISOString(),version:'v3'
+    sh:get(K.sh),log:get(K.log)||[],
+    exportDate:new Date().toISOString(),version:'v3.14'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -2219,6 +2314,8 @@ function doImport(e){
       if(d.simqs)set(K.simq,d.simqs);
       if(d.progress&&Object.keys(d.progress).length>0)set(K.prog,d.progress);
       if(d.trim&&d.trim.length)set(K.trim,d.trim);
+      if(d.sh)set(K.sh,d.sh);
+      if(d.log&&d.log.length)set(K.log,d.log);
       alert(`✓ Importado!\n${(d.cards||[]).length} cards\n${(d.simqs||[]).length} questões de simulado`);
       renderHome();
     }catch{alert('Arquivo inválido.');}
