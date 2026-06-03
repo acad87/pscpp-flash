@@ -993,7 +993,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.18';
+const CURRENT_VERSION = '3.29';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1495,10 +1495,15 @@ function rate(q){
 let sWeak=[];
 
 function finishStudy(){
-  // Ensure study screen is visible for done panel
+  // Hide all screens, then show only study screen for done panel
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.style.display='none';
+    s.classList.remove('active');
+  });
   const studyScreen=document.getElementById('s-study');
   studyScreen.style.display='flex';
   studyScreen.classList.add('active');
+  document.getElementById('bnav').style.display='none';
   document.getElementById('card-area').style.display='none';
   document.getElementById('rrow').classList.remove('show');
   document.getElementById('d-e').textContent=sSt.e;
