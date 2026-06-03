@@ -475,7 +475,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.26</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.29</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -949,7 +949,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.26';
+const CACHE = 'pscpp-v3.29';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1121,11 +1121,9 @@ function generateVariants(card){
 }
 
 function getCardVariant(card){
-  const variants = generateVariants(card);
-  if(variants.length === 1) return variants[0];
-  // Pick random variant each session (seeded by session start time for consistency within session)
-  const idx = Math.floor(Math.random() * variants.length);
-  return variants[idx];
+  // Returns original card — automatic variations disabled (low quality)
+  // Variations should be created manually at card creation time
+  return { front: card.front, back: card.back };
 }
 
 // ═══════════════════════════════════════
@@ -1497,6 +1495,10 @@ function rate(q){
 let sWeak=[];
 
 function finishStudy(){
+  // Ensure study screen is visible for done panel
+  const studyScreen=document.getElementById('s-study');
+  studyScreen.style.display='flex';
+  studyScreen.classList.add('active');
   document.getElementById('card-area').style.display='none';
   document.getElementById('rrow').classList.remove('show');
   document.getElementById('d-e').textContent=sSt.e;
@@ -1598,7 +1600,15 @@ function openSectionModal(sec){
   body.appendChild(statsEl);
 
   // Session history — group by session log entries
-  const secSessions=log.filter(s=>s.section===sec);
+  // Match sessions where main section OR any card studied belongs to this section
+  const secSessions=log.filter(s=>{
+    if(s.section===sec) return true;
+    if(Array.isArray(s.weak) && s.weak.some(w=>w.section===sec)) return true;
+    // Also check if any card in this section was studied (by card id)
+    const secCardIds=new Set(secCards.map(c=>c.id));
+    if(Array.isArray(s.weak) && s.weak.some(w=>secCardIds.has(w.id))) return true;
+    return false;
+  });
 
   if(secSessions.length){
     const label=document.createElement('div');
