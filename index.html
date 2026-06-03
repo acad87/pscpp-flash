@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
+<meta name="app-version" content="3.18">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -276,6 +277,14 @@ body::before{content:'';position:fixed;inset:0;background:
 /* ── SESSION LOG */
 
 /* ── SECTION DETAIL MODAL */
+
+/* ── UPDATE BANNER */
+.update-banner{position:fixed;top:0;left:0;right:0;z-index:500;background:var(--teal);color:var(--white);padding:10px 18px;display:none;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 12px #0006}
+.update-banner.show{display:flex}
+.update-banner-txt{font-size:13px;font-family:'Inter',sans-serif;font-weight:500}
+.update-banner-btn{background:#ffffff25;border:1px solid #ffffff40;color:var(--white);border-radius:8px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+.update-banner-close{background:none;border:none;color:#ffffff80;font-size:18px;cursor:pointer;padding:0;flex-shrink:0}
+
 .sec-modal{position:fixed;inset:0;background:#00000085;z-index:300;display:none;align-items:flex-end;justify-content:center}
 .sec-modal.show{display:flex}
 .sec-modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85dvh;display:flex;flex-direction:column}
@@ -463,7 +472,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.18</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.19</span></div>
     <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
   </div>
   <div class="scroll pb" id="home-scroll">
@@ -873,6 +882,13 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 </div>
 
 <!-- ═══════════ BOTTOM NAV ═══════════ -->
+<!-- UPDATE BANNER -->
+<div class="update-banner" id="update-banner">
+  <div class="update-banner-txt" id="update-banner-txt">Nova versão disponível</div>
+  <button class="update-banner-btn" onclick="doUpdate()">Atualizar</button>
+  <button class="update-banner-close" onclick="document.getElementById('update-banner').classList.remove('show')">×</button>
+</div>
+
 <!-- SECTION DETAIL MODAL -->
 <div class="sec-modal" id="sec-modal" onclick="closeSectionModal(event)">
   <div class="sec-modal-sheet">
@@ -930,6 +946,53 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 
 <script>
 'use strict';
+
+// ═══════════════════════════════════════
+// AUTO UPDATE CHECK
+// ═══════════════════════════════════════
+const CURRENT_VERSION = '3.18';
+
+async function checkForUpdate(){
+  try{
+    // Fetch the live page with cache-busting param
+    const res = await fetch(window.location.href + '?v=' + Date.now(), {
+      method: 'GET',
+      cache: 'no-store'
+    });
+    if(!res.ok) return;
+    const html = await res.text();
+    // Extract version from meta tag
+    const match = html.match(/name="app-version" content="([^"]+)"/);
+    if(!match) return;
+    const remoteVersion = match[1];
+    if(remoteVersion !== CURRENT_VERSION){
+      const banner = document.getElementById('update-banner');
+      document.getElementById('update-banner-txt').textContent =
+        'Nova versão v' + remoteVersion + ' disponível';
+      banner.classList.add('show');
+    }
+  } catch(e){
+    // Silent fail — no network or blocked
+  }
+}
+
+function doUpdate(){
+  // Export backup before reload
+  const data={
+    cards:getCards(),simqs:getSimQs(),
+    progress:getProg(),trim:getTrim(),
+    sh:get(K.sh),log:get(K.log)||[],
+    exportDate:new Date().toISOString(),version:'v'+CURRENT_VERSION
+  };
+  // Save to localStorage as emergency backup
+  localStorage.setItem('pscpp_pre_update_backup', JSON.stringify(data));
+  // Hard reload bypassing cache
+  window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
+}
+
+// Check for update 3 seconds after app loads (non-blocking)
+setTimeout(checkForUpdate, 3000);
+
 // ═══════════════════════════════════════
 // STORAGE
 // ═══════════════════════════════════════
@@ -2437,6 +2500,28 @@ function clearAll(){
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
+
+  // Restore pre-update backup if exists
+  const preBackup = localStorage.getItem('pscpp_pre_update_backup');
+  if(preBackup){
+    try{
+      const d = JSON.parse(preBackup);
+      if(d.cards && d.cards.length > 0){
+        // Only restore if current data is empty (fresh load after update)
+        if(getCards().length === 0){
+          if(d.cards) set(K.cards, d.cards);
+          if(d.simqs) set(K.simq, d.simqs);
+          if(d.progress && Object.keys(d.progress).length > 0) set(K.prog, d.progress);
+          if(d.trim && d.trim.length) set(K.trim, d.trim);
+          if(d.sh) set(K.sh, d.sh);
+          if(d.log && d.log.length) set(K.log, d.log);
+          console.log('Restored pre-update backup:', d.cards.length, 'cards');
+        }
+      }
+    } catch(e){}
+    localStorage.removeItem('pscpp_pre_update_backup');
+  }
+
 populateWeekSelects();
 document.querySelectorAll('.screen').forEach(s=>{if(!s.classList.contains('active'))s.style.display='none';});
 renderHome();
