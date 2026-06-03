@@ -472,8 +472,11 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.19</span></div>
-    <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.20</span></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
+      <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
+    </div>
   </div>
   <div class="scroll pb" id="home-scroll">
 
@@ -952,7 +955,14 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 // ═══════════════════════════════════════
 const CURRENT_VERSION = '3.18';
 
-async function checkForUpdate(){
+async function checkForUpdateManual(){
+  const chip = document.getElementById('update-chip');
+  chip.textContent = '...';
+  await checkForUpdate(true);
+  chip.textContent = '↻';
+}
+
+async function checkForUpdate(manual=false){
   try{
     // Fetch the live page with cache-busting param
     const res = await fetch(window.location.href + '?v=' + Date.now(), {
@@ -970,6 +980,10 @@ async function checkForUpdate(){
       document.getElementById('update-banner-txt').textContent =
         'Nova versão v' + remoteVersion + ' disponível';
       banner.classList.add('show');
+    } else if(manual){
+      const chip = document.getElementById('update-chip');
+      chip.textContent = '✓';
+      setTimeout(()=>chip.textContent='↻', 2000);
     }
   } catch(e){
     // Silent fail — no network or blocked
