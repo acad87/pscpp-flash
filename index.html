@@ -396,7 +396,9 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
    DASHBOARD
 ═══════════════════════════════════════ */
 .dash-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
-.section-row{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.section-row{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .2s}
+.section-row:hover{border-color:var(--teal)}
+.section-row:active{opacity:.85}
 .sec-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer}
 .sec-icon{font-size:17px;flex-shrink:0}
 .sec-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;flex:1}
@@ -472,7 +474,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.21</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.22</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -957,7 +959,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.21';
+const CACHE = 'pscpp-v3.22';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -2385,7 +2387,6 @@ function renderDash(){
 
     const div=document.createElement('div');div.className='section-row';
     div.style.cursor='pointer';
-    div.onclick=()=>openSectionModal(sec);
     div.innerHTML=`
       <div class="sec-hdr">
         <div class="sec-icon">${info.ic}</div>
@@ -2410,6 +2411,9 @@ function renderDash(){
         </div>
         <div class="action-tag ${actionClass}">${action}</div>
       </div>`;
+    div.addEventListener('click', (e)=>{
+      if(!e.target.closest('button')&&!e.target.closest('.action-tag'))openSectionModal(sec);
+    });
     cont.appendChild(div);
   });
 
