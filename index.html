@@ -475,7 +475,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.25</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.26</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -949,7 +949,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.25';
+const CACHE = 'pscpp-v3.26';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1588,62 +1588,100 @@ function openSectionModal(sec){
   const body=document.getElementById('sec-modal-body');
   body.innerHTML='';
 
-  // Stats
-  const statsEl=document.createElement('div');statsEl.className='sec-modal-stats';
+  // Stats row
+  const statsEl=document.createElement('div');
+  statsEl.className='sec-modal-stats';
   statsEl.innerHTML=`
     <div class="sec-modal-stat"><div class="sec-modal-stat-n">${secCards.length}</div><div class="sec-modal-stat-l">total cards</div></div>
     <div class="sec-modal-stat"><div class="sec-modal-stat-n">${avail.length}</div><div class="sec-modal-stat-l">disponíveis</div></div>
-    <div class="sec-modal-stat"><div class="sec-modal-stat-n" style="color:${due.length>0?'var(--amber)':'var(--green)'}">${due.length}</div><div class="sec-modal-stat-l">vencidos</div></div>`;
+    <div class="sec-modal-stat"><div class="sec-modal-stat-n" style="color:${due.length>0?'var(--amber)':'var(--green)'}">${due.length}</div><div class="sec-modal-stat-l">vencidos hoje</div></div>`;
   body.appendChild(statsEl);
 
-  // Session history for this section
-  const secLog=log.filter(s=>s.section===sec||secCards.some(c=>s.weak&&s.weak.some(w=>w.section===sec)));
-  if(secLog.length){
-    const histLabel=document.createElement('div');histLabel.className='sec-modal-sec-lbl';histLabel.textContent='Histórico de sessões';
-    body.appendChild(histLabel);
-    const histWrap=document.createElement('div');histWrap.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px';
-    secLog.slice(0,8).forEach(s=>{
+  // Session history — group by session log entries
+  const secSessions=log.filter(s=>s.section===sec);
+
+  if(secSessions.length){
+    const label=document.createElement('div');
+    label.className='sec-modal-sec-lbl';
+    label.textContent='Sessões de evocação';
+    body.appendChild(label);
+
+    secSessions.forEach((s,i)=>{
       const d=new Date(s.date);
       const dateStr=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const tot=s.total||1;
-      const pct=Math.round(s.easy/tot*100);
+      const sessionNum=secSessions.length-i;
+      const pct=s.total?Math.round(s.easy/s.total*100):0;
       const color=pct>=80?'var(--green)':pct>=60?'var(--amber)':'var(--red)';
-      const row=document.createElement('div');row.className='sec-hist-row';
-      row.innerHTML=`<div class="sec-hist-date">${dateStr}</div>
-        <div class="sec-hist-bar">
-          <div class="sec-hist-e" style="width:${Math.round(s.easy/tot*100)}%"></div>
-          <div class="sec-hist-m" style="width:${Math.round(s.doubt/tot*100)}%"></div>
-          <div class="sec-hist-h" style="width:${Math.round(s.wrong/tot*100)}%"></div>
+
+      const row=document.createElement('div');
+      row.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px';
+
+      row.innerHTML=`
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700">Sessão #${sessionNum}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px">${dateStr} · ${s.total||0} cards · <span style="color:${color}">${pct}% fáceis</span></div>
         </div>
-        <div class="sec-hist-pct" style="color:${color}">${pct}%</div>`;
-      histWrap.appendChild(row);
+        <button class="sec-edit-sec" onclick="moveSessionSection('${s.date}','${sec}')">✎ mover seção</button>`;
+      body.appendChild(row);
     });
-    body.appendChild(histWrap);
+  } else {
+    const empty=document.createElement('div');
+    empty.style.cssText='font-size:12px;color:var(--muted);text-align:center;padding:16px';
+    empty.textContent='Nenhuma sessão registrada ainda para esta seção.';
+    body.appendChild(empty);
   }
 
-  // Cards list with edit section option
-  const cardsLabel=document.createElement('div');cardsLabel.className='sec-modal-sec-lbl';cardsLabel.textContent='Cards desta seção (toque para expandir)';
-  body.appendChild(cardsLabel);
+  // Move ALL cards button
+  if(secCards.length>0){
+    const divider=document.createElement('div');
+    divider.style.cssText='height:1px;background:var(--border);margin:4px 0';
+    body.appendChild(divider);
 
-  secCards.forEach(c=>{
-    const cp=prog[c.id]||{};
-    const daysLeft=cp.next?Math.ceil((cp.next-Date.now())/86400000):0;
-    const statusTxt=daysLeft<=0?'vencido':daysLeft===1?'amanhã':'em '+daysLeft+'d';
-    const statusColor=daysLeft<=0?'var(--red)':daysLeft<=3?'var(--amber)':'var(--muted)';
-    const el=document.createElement('div');el.className='sec-card-item';
-    el.innerHTML=`<div class="sec-card-top">
-      <span style="font-family:'DM Mono',monospace;font-size:9px;color:${statusColor}">${statusTxt}</span>
-      <button class="sec-edit-sec" onclick="event.stopPropagation();editCardSection('${c.id}')">✎ mover seção</button>
-    </div>
-    <div class="sec-card-q">${c.front}</div>
-    <div class="sec-card-a">${c.back}${c.source?'<br><em style="color:var(--teal2);font-size:10px">'+c.source+'</em>':''}</div>`;
-    el.onclick=()=>el.classList.toggle('open');
-    body.appendChild(el);
-  });
+    const moveBtn=document.createElement('button');
+    moveBtn.className='btn btn-s';
+    moveBtn.style.cssText='margin-top:4px;font-size:12px';
+    moveBtn.textContent='✎ Mover todos os cards desta seção';
+    moveBtn.onclick=()=>moveAllCards(sec);
+    body.appendChild(moveBtn);
+  }
 
-  const modal = document.getElementById('sec-modal');
+  const modal=document.getElementById('sec-modal');
   modal.classList.add('show');
-  modal.onclick = (e)=>{ if(e.target===modal) modal.classList.remove('show'); };
+  modal.onclick=(e)=>{if(e.target===modal)modal.classList.remove('show');};
+}
+
+function moveSessionSection(sessionDate, currentSec){
+  const sections=['I','II','III','IV','V','VI','VII','MA'];
+  const labels={'I':'I — Manobrabilidade','II':'II — Arte Naval','III':'III — Navegação','IV':'IV — Legislação','V':'V — Meteorologia','VI':'VI — Comunicações','VII':'VII — Conhec. Gerais','MA':'MA — Mestre Amador'};
+  const opts=sections.map(s=>s+': '+labels[s]).join('\n');
+  const input=prompt('Mover sessão para qual seção?\n\n'+opts+'\n\nDigite a letra (ex: II):');
+  if(!input)return;
+  const newSec=input.trim().toUpperCase();
+  if(!sections.includes(newSec)){alert('Seção inválida.');return;}
+  // Update log entry section
+  const log=Array.isArray(get(K.log))?get(K.log):[];
+  const idx=log.findIndex(s=>s.date===sessionDate);
+  if(idx!==-1){log[idx].section=newSec;set(K.log,log);}
+  alert('✓ Sessão movida para Seção '+newSec);
+  document.getElementById('sec-modal').classList.remove('show');
+  renderDash();
+}
+
+function moveAllCards(currentSec){
+  const sections=['I','II','III','IV','V','VI','VII','MA'];
+  const labels={'I':'I — Manobrabilidade','II':'II — Arte Naval','III':'III — Navegação','IV':'IV — Legislação','V':'V — Meteorologia','VI':'VI — Comunicações','VII':'VII — Conhec. Gerais','MA':'MA — Mestre Amador'};
+  const opts=sections.map(s=>s+': '+labels[s]).join('\n');
+  const input=prompt('Mover todos os cards de Seção '+currentSec+' para qual seção?\n\n'+opts+'\n\nDigite a letra (ex: II):');
+  if(!input)return;
+  const newSec=input.trim().toUpperCase();
+  if(!sections.includes(newSec)){alert('Seção inválida.');return;}
+  const cards=getCards();
+  let count=0;
+  cards.forEach(c=>{if(c.section===currentSec){c.section=newSec;count++;}});
+  set(K.cards,cards);
+  alert('✓ '+count+' card(s) movidos para Seção '+newSec);
+  document.getElementById('sec-modal').classList.remove('show');
+  renderHome();renderDash();
 }
 
 function editCardSection(cardId){
