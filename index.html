@@ -472,7 +472,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.20</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.21</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -950,6 +950,54 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 <script>
 'use strict';
 
+
+// ═══════════════════════════════════════
+// SERVICE WORKER — network-first cache
+// ═══════════════════════════════════════
+if('serviceWorker' in navigator){
+  // Inline service worker as blob — no separate file needed
+  const swCode = `
+const CACHE = 'pscpp-v3.21';
+self.addEventListener('install', e => {
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+self.addEventListener('fetch', e => {
+  if(e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request, {cache: 'no-store'})
+      .then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
+  );
+});
+`;
+  const blob = new Blob([swCode], {type: 'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl, {scope: '/'})
+    .then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
+            document.getElementById('update-banner-txt').textContent = 'Nova versão disponível';
+            document.getElementById('update-banner').classList.add('show');
+          }
+        });
+      });
+    })
+    .catch(() => {});
+}
+
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
@@ -991,17 +1039,22 @@ async function checkForUpdate(manual=false){
 }
 
 function doUpdate(){
-  // Export backup before reload
   const data={
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
     exportDate:new Date().toISOString(),version:'v'+CURRENT_VERSION
   };
-  // Save to localStorage as emergency backup
   localStorage.setItem('pscpp_pre_update_backup', JSON.stringify(data));
-  // Hard reload bypassing cache
-  window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
+  // Tell service worker to skip waiting then reload
+  if(navigator.serviceWorker && navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({type:'SKIP_WAITING'});
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload(true);
+    });
+  } else {
+    window.location.href = window.location.href.split('?')[0] + '?nocache=' + Date.now();
+  }
 }
 
 // Check for update 3 seconds after app loads (non-blocking)
