@@ -274,6 +274,36 @@ body::before{content:'';position:fixed;inset:0;background:
 
 
 /* ── SESSION LOG */
+
+/* ── SECTION DETAIL MODAL */
+.sec-modal{position:fixed;inset:0;background:#00000085;z-index:300;display:none;align-items:flex-end;justify-content:center}
+.sec-modal.show{display:flex}
+.sec-modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85dvh;display:flex;flex-direction:column}
+.sec-modal-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sec-modal-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.sec-modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px;line-height:1}
+.sec-modal-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.sec-modal-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sec-modal-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
+.sec-modal-stat-n{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--teal2)}
+.sec-modal-stat-l{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+.sec-modal-sec-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;margin-bottom:6px}
+.sec-card-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:background .15s}
+.sec-card-item:hover{background:var(--bg3)}
+.sec-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.sec-card-q{font-size:12px;color:var(--white);line-height:1.4}
+.sec-card-a{font-size:11px;color:var(--muted);margin-top:4px;padding-top:4px;border-top:1px solid var(--border);line-height:1.4;display:none}
+.sec-card-item.open .sec-card-a{display:block}
+.sec-edit-sec{font-family:'DM Mono',monospace;font-size:10px;color:var(--teal2);background:var(--teal3);border:none;padding:3px 8px;border-radius:6px;cursor:pointer}
+.sec-hist-row{padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:12px}
+.sec-hist-row:last-child{border-bottom:none}
+.sec-hist-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:100px;flex-shrink:0}
+.sec-hist-bar{flex:1;height:5px;border-radius:3px;overflow:hidden;display:flex;gap:1px}
+.sec-hist-e{background:var(--green)}
+.sec-hist-m{background:var(--amber)}
+.sec-hist-h{background:var(--red)}
+.sec-hist-pct{font-family:'DM Mono',monospace;font-size:10px;width:32px;text-align:right;flex-shrink:0}
+
 .slog-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .slog-hdr{padding:10px 14px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3)}
 .slog-row{padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
@@ -433,7 +463,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.17</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.18</span></div>
     <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
   </div>
   <div class="scroll pb" id="home-scroll">
@@ -843,6 +873,17 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 </div>
 
 <!-- ═══════════ BOTTOM NAV ═══════════ -->
+<!-- SECTION DETAIL MODAL -->
+<div class="sec-modal" id="sec-modal" onclick="closeSectionModal(event)">
+  <div class="sec-modal-sheet">
+    <div class="sec-modal-hdr">
+      <div class="sec-modal-title" id="sec-modal-title">Seção</div>
+      <button class="sec-modal-close" onclick="document.getElementById('sec-modal').classList.remove('show')">×</button>
+    </div>
+    <div class="sec-modal-body" id="sec-modal-body"></div>
+  </div>
+</div>
+
 <nav class="bnav" id="bnav">
   <div class="ni active" id="ni-home" onclick="showHome()"><div class="ni-icon">⚡</div><div class="ni-label">Início</div></div>
   <div class="ni" id="ni-add"  onclick="showAdd()"><div class="ni-icon">＋</div><div class="ni-label">Adicionar</div></div>
@@ -1406,6 +1447,99 @@ let trimQ=[],trimI=0,trimSt={},trimSel=null,trimRevealed=false;
 function showTrimOptions(){
   document.getElementById('modal-trim').classList.add('show');
 }
+
+function closeSectionModal(e){
+  if(e.target===document.getElementById('sec-modal'))
+    document.getElementById('sec-modal').classList.remove('show');
+}
+
+function openSectionModal(sec){
+  const cards=getCards();
+  const prog=getProg();
+  const log=get(K.log)||[];
+  const info=SECS[sec]||{n:sec,ic:'📄'};
+  const secCards=cards.filter(c=>c.section===sec);
+  const avail=secCards.filter(c=>isWeekAvailable(c));
+  const due=avail.filter(c=>isDue(c.id));
+
+  document.getElementById('sec-modal-title').textContent=info.ic+' Seção '+sec+' — '+info.n;
+  const body=document.getElementById('sec-modal-body');
+  body.innerHTML='';
+
+  // Stats
+  const statsEl=document.createElement('div');statsEl.className='sec-modal-stats';
+  statsEl.innerHTML=`
+    <div class="sec-modal-stat"><div class="sec-modal-stat-n">${secCards.length}</div><div class="sec-modal-stat-l">total cards</div></div>
+    <div class="sec-modal-stat"><div class="sec-modal-stat-n">${avail.length}</div><div class="sec-modal-stat-l">disponíveis</div></div>
+    <div class="sec-modal-stat"><div class="sec-modal-stat-n" style="color:${due.length>0?'var(--amber)':'var(--green)'}">${due.length}</div><div class="sec-modal-stat-l">vencidos</div></div>`;
+  body.appendChild(statsEl);
+
+  // Session history for this section
+  const secLog=log.filter(s=>s.section===sec||secCards.some(c=>s.weak&&s.weak.some(w=>w.section===sec)));
+  if(secLog.length){
+    const histLabel=document.createElement('div');histLabel.className='sec-modal-sec-lbl';histLabel.textContent='Histórico de sessões';
+    body.appendChild(histLabel);
+    const histWrap=document.createElement('div');histWrap.style.cssText='background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px';
+    secLog.slice(0,8).forEach(s=>{
+      const d=new Date(s.date);
+      const dateStr=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const tot=s.total||1;
+      const pct=Math.round(s.easy/tot*100);
+      const color=pct>=80?'var(--green)':pct>=60?'var(--amber)':'var(--red)';
+      const row=document.createElement('div');row.className='sec-hist-row';
+      row.innerHTML=`<div class="sec-hist-date">${dateStr}</div>
+        <div class="sec-hist-bar">
+          <div class="sec-hist-e" style="width:${Math.round(s.easy/tot*100)}%"></div>
+          <div class="sec-hist-m" style="width:${Math.round(s.doubt/tot*100)}%"></div>
+          <div class="sec-hist-h" style="width:${Math.round(s.wrong/tot*100)}%"></div>
+        </div>
+        <div class="sec-hist-pct" style="color:${color}">${pct}%</div>`;
+      histWrap.appendChild(row);
+    });
+    body.appendChild(histWrap);
+  }
+
+  // Cards list with edit section option
+  const cardsLabel=document.createElement('div');cardsLabel.className='sec-modal-sec-lbl';cardsLabel.textContent='Cards desta seção (toque para expandir)';
+  body.appendChild(cardsLabel);
+
+  secCards.forEach(c=>{
+    const cp=prog[c.id]||{};
+    const daysLeft=cp.next?Math.ceil((cp.next-Date.now())/86400000):0;
+    const statusTxt=daysLeft<=0?'vencido':daysLeft===1?'amanhã':'em '+daysLeft+'d';
+    const statusColor=daysLeft<=0?'var(--red)':daysLeft<=3?'var(--amber)':'var(--muted)';
+    const el=document.createElement('div');el.className='sec-card-item';
+    el.innerHTML=`<div class="sec-card-top">
+      <span style="font-family:'DM Mono',monospace;font-size:9px;color:${statusColor}">${statusTxt}</span>
+      <button class="sec-edit-sec" onclick="event.stopPropagation();editCardSection('${c.id}')">✎ mover seção</button>
+    </div>
+    <div class="sec-card-q">${c.front}</div>
+    <div class="sec-card-a">${c.back}${c.source?'<br><em style="color:var(--teal2);font-size:10px">'+c.source+'</em>':''}</div>`;
+    el.onclick=()=>el.classList.toggle('open');
+    body.appendChild(el);
+  });
+
+  document.getElementById('sec-modal').classList.add('show');
+}
+
+function editCardSection(cardId){
+  const sections=['I','II','III','IV','V','VI','VII','MA'];
+  const labels={'I':'I — Manobrabilidade','II':'II — Arte Naval','III':'III — Navegação','IV':'IV — Legislação','V':'V — Meteorologia','VI':'VI — Comunicações','VII':'VII — Conhec. Gerais','MA':'MA — Mestre Amador'};
+  const opts=sections.map(s=>`${s}: ${labels[s]}`).join('\n');
+  const input=prompt('Mover para qual seção?\n\n'+opts+'\n\nDigite a letra (ex: II):');
+  if(!input)return;
+  const newSec=input.trim().toUpperCase();
+  if(!sections.includes(newSec)){alert('Seção inválida.');return;}
+  const cards=getCards();
+  const idx=cards.findIndex(c=>c.id===cardId);
+  if(idx===-1)return;
+  cards[idx].section=newSec;
+  set(K.cards,cards);
+  alert('✓ Card movido para Seção '+newSec);
+  document.getElementById('sec-modal').classList.remove('show');
+  renderHome();renderDash();
+}
+
 function closeTrimModal(e){
   if(e.target===document.getElementById('modal-trim'))
     document.getElementById('modal-trim').classList.remove('show');
@@ -1813,6 +1947,18 @@ function getAddFields(){
 }
 
 // Parse template ---Q--- / ---FIM-Q---
+function detectSection(text){
+  const t=(text||'').toLowerCase();
+  if(/casco|convés|cavernamento|chapeamento|vau|caverna|quilha|roda de proa|tombadilho|castelo|costado|carena|borda.falsa|amura|fonseca|arte naval|rebocad|hensen|nayak|amarr|atrac|funde/i.test(t)) return 'II';
+  if(/propuls|hélice|leme|curva de giro|squat|bank effect|resistência|manobrabilidade|pna|crenshaw|macElrevey|bertram|sname|turning|crash stop|pivot|zig.zag|pull.out|dieudonne|cavitaç|slip/i.test(t)) return 'I';
+  if(/colreg|ripeam|normam|lesta|rlesta|praticagem|tribunal|lei \d|portaria|imO a\.|legisl|autoridade marítima|pimenta/i.test(t)) return 'IV';
+  if(/carta náutica|maré|radar|ecdis|ais|posicionamento|bridge team|miguens|navegaç|bento|ics bridge/i.test(t)) return 'III';
+  if(/meteorolog|onda|ciclone|furacão|corrente oceân|ekman|lobo|soares|ynoue|trs/i.test(t)) return 'V';
+  if(/cis|smcp|gmdss|navtex|inmarsat|dsc|bandeira|sinal|código internacional|vhf|hf|mf|epirb/i.test(t)) return 'VI';
+  if(/porto|economia marítima|planejamento portuário|marpol|fatores humanos|stopford|livingstone|pianc/i.test(t)) return 'VII';
+  return null; // no detection — keep field value
+}
+
 function parseTemplate(text, fields){
   const blocks=text.split('---Q---').slice(1);
   if(!blocks.length) return null;
@@ -1963,7 +2109,7 @@ function createCard(p, fields, tipo){
 
   return{
     id,
-    section:fields.section,
+    section:p.detectedSec||fields.section,
     semana:fields.semana,
     trimestre:fields.trimestre,
     edital:fields.edital,
@@ -2108,6 +2254,8 @@ function renderDash(){
     const pctClass=combined===null?'none':combined>=80?'hi':combined>=60?'mid':'lo';
 
     const div=document.createElement('div');div.className='section-row';
+    div.style.cursor='pointer';
+    div.onclick=()=>openSectionModal(sec);
     div.innerHTML=`
       <div class="sec-hdr">
         <div class="sec-icon">${info.ic}</div>
