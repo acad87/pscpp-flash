@@ -475,7 +475,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.23</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.25</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -949,7 +949,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.23';
+const CACHE = 'pscpp-v3.25';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1334,7 +1334,7 @@ function renderSessionHistory(){
   const sh=get(K.sh);
   const section=document.getElementById('sh-section');
   const list=document.getElementById('sh-list');
-  if(!sh||!sh.weak||sh.weak.length===0){section.style.display='none';return;}
+  if(!sh||!Array.isArray(sh.weak)||sh.weak.length===0){section.style.display='none';return;}
   section.style.display='block';
   // Format date
   const d=new Date(sh.date);
@@ -1577,7 +1577,8 @@ function closeSectionModal(e){
 function openSectionModal(sec){
   const cards=getCards();
   const prog=getProg();
-  const log=get(K.log)||[];
+  const _rawLog=get(K.log);
+  const log=Array.isArray(_rawLog)?_rawLog:[];
   const info=SECS[sec]||{n:sec,ic:'📄'};
   const secCards=cards.filter(c=>c.section===sec);
   const avail=secCards.filter(c=>isWeekAvailable(c));
@@ -2377,12 +2378,11 @@ function renderDash(){
     const pctClass=combined===null?'none':combined>=80?'hi':combined>=60?'mid':'lo';
 
     const div=document.createElement('div');div.className='section-row';
-    div.style.cursor='pointer';
     div.innerHTML=`
-      <div class="sec-hdr">
+      <div class="sec-hdr" onclick="openSectionModal('${sec}')" style="cursor:pointer">
         <div class="sec-icon">${info.ic}</div>
         <div class="sec-name">Seção ${sec} — ${info.n}</div>
-        <div class="sec-pct ${pctClass}">${combined!==null?combined+'%':sc.length?'—':'vazio'}</div>
+        <div class="sec-pct ${pctClass}">${combined!==null?combined+'%':sc.length?'—':'vazio'} ›</div>
       </div>
       <div class="sec-body">
         ${sm2pct!==null?`<div class="metric-row">
@@ -2402,15 +2402,12 @@ function renderDash(){
         </div>
         <div class="action-tag ${actionClass}">${action}</div>
       </div>`;
-    div.addEventListener('click', (e)=>{
-      if(!e.target.closest('button')&&!e.target.closest('.action-tag'))openSectionModal(sec);
-    });
     cont.appendChild(div);
   });
 
   // Trim history
   // Session log
-  const _slog=get(K.log)||[];
+  const _rawSlog=get(K.log); const _slog=Array.isArray(_rawSlog)?_rawSlog:[];
   if(_slog.length){
     const slogLabel=document.createElement('div');
     slogLabel.className='slabel';slogLabel.textContent='Histórico de sessões';
