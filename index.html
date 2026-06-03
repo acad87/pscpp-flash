@@ -285,7 +285,8 @@ body::before{content:'';position:fixed;inset:0;background:
 .update-banner-btn{background:#ffffff25;border:1px solid #ffffff40;color:var(--white);border-radius:8px;padding:6px 14px;font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
 .update-banner-close{background:none;border:none;color:#ffffff80;font-size:18px;cursor:pointer;padding:0;flex-shrink:0}
 
-.sec-modal{position:fixed;inset:0;background:#00000085;z-index:300;display:none;align-items:flex-end;justify-content:center}
+.sec-modal{position:fixed;inset:0;background:#00000085;z-index:9999;display:none;align-items:flex-end;justify-content:center;cursor:pointer}
+.sec-modal-sheet{cursor:default}
 .sec-modal.show{display:flex}
 .sec-modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85dvh;display:flex;flex-direction:column}
 .sec-modal-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -474,7 +475,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.22</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.23</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -894,17 +895,6 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
   <button class="update-banner-close" onclick="document.getElementById('update-banner').classList.remove('show')">×</button>
 </div>
 
-<!-- SECTION DETAIL MODAL -->
-<div class="sec-modal" id="sec-modal" onclick="closeSectionModal(event)">
-  <div class="sec-modal-sheet">
-    <div class="sec-modal-hdr">
-      <div class="sec-modal-title" id="sec-modal-title">Seção</div>
-      <button class="sec-modal-close" onclick="document.getElementById('sec-modal').classList.remove('show')">×</button>
-    </div>
-    <div class="sec-modal-body" id="sec-modal-body"></div>
-  </div>
-</div>
-
 <nav class="bnav" id="bnav">
   <div class="ni active" id="ni-home" onclick="showHome()"><div class="ni-icon">⚡</div><div class="ni-label">Início</div></div>
   <div class="ni" id="ni-add"  onclick="showAdd()"><div class="ni-icon">＋</div><div class="ni-label">Adicionar</div></div>
@@ -959,7 +949,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.22';
+const CACHE = 'pscpp-v3.23';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1581,8 +1571,7 @@ function showTrimOptions(){
 }
 
 function closeSectionModal(e){
-  if(e.target===document.getElementById('sec-modal'))
-    document.getElementById('sec-modal').classList.remove('show');
+  document.getElementById('sec-modal').classList.remove('show');
 }
 
 function openSectionModal(sec){
@@ -1651,7 +1640,9 @@ function openSectionModal(sec){
     body.appendChild(el);
   });
 
-  document.getElementById('sec-modal').classList.add('show');
+  const modal = document.getElementById('sec-modal');
+  modal.classList.add('show');
+  modal.onclick = (e)=>{ if(e.target===modal) modal.classList.remove('show'); };
 }
 
 function editCardSection(cardId){
@@ -2597,5 +2588,15 @@ populateWeekSelects();
 document.querySelectorAll('.screen').forEach(s=>{if(!s.classList.contains('active'))s.style.display='none';});
 renderHome();
 </script>
+<!-- SECTION DETAIL MODAL — global, outside all screens -->
+<div class="sec-modal" id="sec-modal">
+  <div class="sec-modal-sheet">
+    <div class="sec-modal-hdr">
+      <div class="sec-modal-title" id="sec-modal-title">Seção</div>
+      <button class="sec-modal-close" onclick="document.getElementById('sec-modal').classList.remove('show')">×</button>
+    </div>
+    <div class="sec-modal-body" id="sec-modal-body"></div>
+  </div>
+</div>
 </body>
 </html>
