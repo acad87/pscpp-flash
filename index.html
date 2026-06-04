@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.18">
+<meta name="app-version" content="3.34">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -2810,7 +2810,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.14'
+    exportDate:new Date().toISOString(),version:'v3.34'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
