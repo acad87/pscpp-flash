@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.33</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.34</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -750,6 +750,11 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
     <div>
       <div class="flabel">Material / Fonte</div>
       <input type="text" id="add-material" placeholder="Ex: NORMAM-311, Bertram Cap.3">
+    </div>
+
+    <div>
+      <div class="flabel">Subseção / Tema</div>
+      <input type="text" id="add-subsec" placeholder="Ex: Rumos e Marcações, Calunga, COLREG">
     </div>
 
     <div class="divider"></div>
@@ -1034,6 +1039,16 @@ function _updateLimitOptions(count){
   }
 }
 
+function updateSubsecFilter(){
+  const subsec = document.getElementById('filter-subsec-sel').value;
+  if(subsec){
+    _basePool = _buildPool(_pendingSec).filter(c => c.subsec === subsec);
+  } else {
+    _basePool = _buildPool(_pendingSec);
+  }
+  selectFilter(_selectedFilter);
+}
+
 function showLimitPicker(sec, forceAll){
   _basePool = _buildPool(sec);
   if(!_basePool.length){ alert('Sem cards disponíveis nesta semana.'); return; }
@@ -1083,6 +1098,17 @@ function showLimitPicker(sec, forceAll){
   document.getElementById('limit-custom-wrap').style.display = 'none';
   document.getElementById('limit-custom-input').value = '';
   _updateLimitOptions(_basePool.length);
+
+  // Populate subsec dropdown
+  const subsecSel = document.getElementById('filter-subsec-sel');
+  const allCards = _buildPool(sec);
+  const subsecs = [...new Set(allCards.map(c=>c.subsec).filter(Boolean))].sort();
+  subsecSel.innerHTML = '<option value="">Todas as subseções</option>';
+  subsecs.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    subsecSel.appendChild(opt);
+  });
 
   document.getElementById('limit-modal').classList.add('show');
 }
@@ -1135,7 +1161,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.33';
+const CACHE = 'pscpp-v3.34';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1179,7 +1205,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.33';
+const CURRENT_VERSION = '3.34';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1679,6 +1705,7 @@ function renderCard(){
   tagEl.innerHTML='';
   tagEl.innerHTML+=`<span class="ctag-item">Seção ${c.section}</span>`;
   if(c.semana&&c.semana!='0') tagEl.innerHTML+=`<span class="ctag-item">Sem.${String(c.semana).padStart(2,'0')}</span>`;
+  if(c.subsec) tagEl.innerHTML+=`<span class="ctag-item" style="background:#8b5cf620;color:#a78bfa">${c.subsec}</span>`;
   if(c.edital){
     const ec=c.edital==='2025'?'edital-2025':c.edital==='2012'?'edital-2012':'edital-ambos';
     tagEl.innerHTML+=`<span class="ctag-edital ${ec}">${c.edital}</span>`;
@@ -2433,6 +2460,7 @@ async function genFlash(){
       front:c.front,
       back:c.back,
       source:c.source||fields.material||'',
+      subsec:c.subsec||fields.subsec||'',
       createdAt:Date.now()
     }));
     showPrev(pending);
@@ -2517,6 +2545,7 @@ function createCard(p, fields, tipo){
     front:p.pergunta,
     back:p.resposta,
     source:p.fonte||fields.material||'',
+    subsec:p.subsec||fields.subsec||'',
     createdAt:Date.now()
   };
 }
@@ -2867,6 +2896,11 @@ renderHome();
 
     <!-- STEP 1: Filter -->
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;margin-bottom:4px">1 — Filtrar cards</div>
+    <div class="form-group" style="margin-bottom:8px">
+      <select id="filter-subsec-sel" onchange="updateSubsecFilter()" style="font-size:12px;padding:8px">
+        <option value="">Todas as subseções</option>
+      </select>
+    </div>
     <div style="display:flex;flex-direction:column;gap:6px" id="filter-opts">
       <div class="filter-opt selected" id="fopt-all" onclick="selectFilter('all')">
         <span class="filter-opt-ic">📚</span>
