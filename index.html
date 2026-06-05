@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.42">
+<meta name="app-version" content="3.43">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.42</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.43</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -1161,7 +1161,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.42';
+const CACHE = 'pscpp-v3.43';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1205,7 +1205,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.42';
+const CURRENT_VERSION = '3.43';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1420,7 +1420,7 @@ function showCfg(){
   document.getElementById('cfg-week').value=c.week||'1';
   document.getElementById('cfg-trim-cur').value=c.trimCur||'T1';
 }
-function goHome(){document.getElementById('bnav').style.display='flex';showHome();}
+function goHome(){const done=document.getElementById('done');done.style.cssText='';done.classList.remove('show');document.getElementById('bnav').style.display='flex';showHome();}
 
 function populateWeekSelects(){
   ['cfg-week','add-week'].forEach(id=>{
@@ -1759,18 +1759,25 @@ function rate(q){
 let sWeak=[];
 
 function finishStudy(){
-  // Show study screen with done panel
-  showScreen('study');
-  document.getElementById('bnav').style.display='none';
-  document.getElementById('card-area').style.display='none';
-  document.getElementById('rrow').classList.remove('show');
+  const tot=sQ.length;
+  const pct=Math.round(sSt.e/tot*100);
+
+  // Update stats
   document.getElementById('d-e').textContent=sSt.e;
   document.getElementById('d-m').textContent=sSt.m;
   document.getElementById('d-h').textContent=sSt.h;
-  const tot=sQ.length;const pct=Math.round(sSt.e/tot*100);
-  document.getElementById('done-sub').textContent=`${tot} cards revisados. ${pct}% fáceis.${sSt.h>0?` ${sSt.h} para reforçar.`:' Excelente!'}`;
+  document.getElementById('done-sub').textContent=tot+' cards revisados. '+pct+'% fáceis.'+(sSt.h>0?' '+sSt.h+' para reforçar.':' Excelente!');
   document.getElementById('pbar').style.width='100%';
   document.getElementById('ptxt').textContent=tot+' / '+tot;
+
+  // Hide everything except done panel
+  document.getElementById('card-area').style.display='none';
+  document.getElementById('rrow').classList.remove('show');
+  document.getElementById('bnav').style.display='none';
+
+  // Force done panel visible as fixed overlay
+  const done=document.getElementById('done');
+  done.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 18px;text-align:center;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch';
 
   // Session review — show weak cards
   const reviewWrap=document.getElementById('session-review-wrap');
@@ -1811,6 +1818,7 @@ function finishStudy(){
   if(_log.length>50)_log.pop();
   set(K.log,_log);
 
+  console.log('adding show to done');
   document.getElementById('done').classList.add('show');
   document.getElementById('bnav').style.display='flex';
   // Scroll to top so done panel is visible
@@ -2826,7 +2834,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.42'
+    exportDate:new Date().toISOString(),version:'v3.43'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
