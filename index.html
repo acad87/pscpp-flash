@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.38">
+<meta name="app-version" content="3.39">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -139,11 +139,11 @@ body::before{content:'';position:fixed;inset:0;background:
 .pbar-fill{height:100%;background:var(--teal2);border-radius:2px;transition:width .4s ease}
 .pbar-txt{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px}
 
-.card-area{flex:1;padding:0 18px;display:flex;align-items:center;justify-content:center;min-height:0}
-.flip-wrap{width:100%;max-width:440px;perspective:1000px;cursor:pointer}
-.flip-inner{position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);min-height:260px}
+.card-area{flex:1;padding:12px 18px;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.flip-wrap{width:100%;max-width:440px;cursor:pointer}
+.flip-inner{position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);min-height:260px;height:auto}
 .flip-inner.flipped{transform:rotateY(180deg)}
-.cface{position:absolute;inset:0;background:var(--card);border:1px solid var(--border);border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;padding:22px 20px;min-height:260px}
+.cface{position:relative;background:var(--card);border:1px solid var(--border);border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;padding:22px 20px;min-height:260px}
 .cface.back{transform:rotateY(180deg);border-color:var(--teal)}
 .cface-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;margin-bottom:10px}
 .cface.back .cface-lbl{color:var(--amber)}
@@ -153,7 +153,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .edital-2025{background:#3b82f618;color:#60a5fa;border:1px solid #3b82f628}
 .edital-2012{background:#f59e0b18;color:#fbbf24;border:1px solid #f59e0b28}
 .edital-ambos{background:#8b5cf618;color:#a78bfa;border:1px solid #8b5cf628}
-.ctext{font-size:14px;line-height:1.6;color:var(--white);flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ctext{font-size:13px;line-height:1.55;color:var(--white);flex:1}
 .chint{font-size:10px;color:var(--muted);text-align:center;margin-top:14px;opacity:.6}
 .csrc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border);line-height:1.4}
 
@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.38</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.39</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -1161,7 +1161,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.38';
+const CACHE = 'pscpp-v3.39';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1205,7 +1205,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.38';
+const CURRENT_VERSION = '3.39';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -2813,7 +2813,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.38'
+    exportDate:new Date().toISOString(),version:'v3.39'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
