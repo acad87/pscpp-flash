@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.41">
+<meta name="app-version" content="3.42">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -167,7 +167,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .re{background:#10b98118;color:var(--green);border:1px solid #10b98128}
 
 /* done */
-.done{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 18px;text-align:center;position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.done{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 18px;text-align:center;min-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .done.show{display:flex}
 .done-ic{font-size:52px}
 .done-t{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.41</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.42</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -1161,7 +1161,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.41';
+const CACHE = 'pscpp-v3.42';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1205,7 +1205,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.41';
+const CURRENT_VERSION = '3.42';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1759,14 +1759,8 @@ function rate(q){
 let sWeak=[];
 
 function finishStudy(){
-  // Hide all screens, then show only study screen for done panel
-  document.querySelectorAll('.screen').forEach(s=>{
-    s.style.display='none';
-    s.classList.remove('active');
-  });
-  const studyScreen=document.getElementById('s-study');
-  studyScreen.style.display='flex';
-  studyScreen.classList.add('active');
+  // Show study screen with done panel
+  showScreen('study');
   document.getElementById('bnav').style.display='none';
   document.getElementById('card-area').style.display='none';
   document.getElementById('rrow').classList.remove('show');
@@ -1819,7 +1813,9 @@ function finishStudy(){
 
   document.getElementById('done').classList.add('show');
   document.getElementById('bnav').style.display='flex';
-  document.getElementById('bnav').style.zIndex='201';
+  // Scroll to top so done panel is visible
+  window.scrollTo(0,0);
+  document.getElementById('s-study').scrollTop=0;
 }
 
 function retryErrors(){
@@ -2830,7 +2826,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.41'
+    exportDate:new Date().toISOString(),version:'v3.42'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
