@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.39">
+<meta name="app-version" content="3.40">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -139,11 +139,11 @@ body::before{content:'';position:fixed;inset:0;background:
 .pbar-fill{height:100%;background:var(--teal2);border-radius:2px;transition:width .4s ease}
 .pbar-txt{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px}
 
-.card-area{flex:1;padding:12px 18px;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.card-area{flex:1;padding:12px 18px;display:flex;align-items:center;justify-content:center;min-height:0}
 .flip-wrap{width:100%;max-width:440px;cursor:pointer}
-.flip-inner{position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);min-height:260px;height:auto}
+.flip-inner{position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1)}
 .flip-inner.flipped{transform:rotateY(180deg)}
-.cface{position:relative;background:var(--card);border:1px solid var(--border);border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;padding:22px 20px;min-height:260px}
+.cface{position:absolute;inset:0;background:var(--card);border:1px solid var(--border);border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;padding:22px 20px;min-height:260px}
 .cface.back{transform:rotateY(180deg);border-color:var(--teal)}
 .cface-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;margin-bottom:10px}
 .cface.back .cface-lbl{color:var(--amber)}
@@ -153,7 +153,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .edital-2025{background:#3b82f618;color:#60a5fa;border:1px solid #3b82f628}
 .edital-2012{background:#f59e0b18;color:#fbbf24;border:1px solid #f59e0b28}
 .edital-ambos{background:#8b5cf618;color:#a78bfa;border:1px solid #8b5cf628}
-.ctext{font-size:13px;line-height:1.55;color:var(--white);flex:1}
+.ctext{font-size:13px;line-height:1.55;color:var(--white);flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .chint{font-size:10px;color:var(--muted);text-align:center;margin-top:14px;opacity:.6}
 .csrc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border);line-height:1.4}
 
@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.39</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.40</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -1161,7 +1161,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.39';
+const CACHE = 'pscpp-v3.40';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1205,7 +1205,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.39';
+const CURRENT_VERSION = '3.40';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1693,6 +1693,21 @@ function renderEvocList(cards){
   });
 }
 
+function adjustCardHeight(){
+  const fi = document.getElementById('fi');
+  if(!fi) return;
+  const isFlipped = fi.classList.contains('flipped');
+  const faces = fi.querySelectorAll('.cface');
+  if(!faces.length) return;
+  // Measure the active face content height
+  const activeFace = isFlipped ? faces[1] : faces[0];
+  // Temporarily make it relative to measure
+  activeFace.style.position = 'relative';
+  const h = Math.max(260, activeFace.scrollHeight + 20);
+  activeFace.style.position = '';
+  fi.style.height = h + 'px';
+}
+
 function renderCard(){
   if(sI>=sQ.length){finishStudy();return;}
   const c=sQ[sI];
@@ -1721,8 +1736,9 @@ function renderCard(){
   // Apply card variant — display only, SM-2 always tracks original card.id unchanged
   const _v=getCardVariant(c);
   setFormattedText(document.getElementById('c-front'),_v.front);
-  document.getElementById('c-back').textContent=c.back;
+  setFormattedText(document.getElementById('c-back'), c.back);
   document.getElementById('c-src').textContent=c.source?'Fonte: '+c.source:'';
+  setTimeout(adjustCardHeight, 30);
   document.getElementById('ri-h').textContent=previewInterval(c.id,1);
   document.getElementById('ri-m').textContent=previewInterval(c.id,2);
   document.getElementById('ri-e').textContent=previewInterval(c.id,3);
@@ -1730,7 +1746,7 @@ function renderCard(){
   document.getElementById('fi').classList.remove('flipped');
   document.getElementById('rrow').classList.remove('show');
 }
-function flip(){if(flipped)return;flipped=true;document.getElementById('fi').classList.add('flipped');setTimeout(()=>document.getElementById('rrow').classList.add('show'),280);}
+function flip(){if(flipped)return;flipped=true;document.getElementById('fi').classList.add('flipped');setTimeout(()=>{document.getElementById('rrow').classList.add('show');adjustCardHeight();},280);}
 function rate(q){
   const card=sQ[sI];
   updateCP(card.id,q);incDone();
@@ -2813,7 +2829,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.39'
+    exportDate:new Date().toISOString(),version:'v3.40'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
