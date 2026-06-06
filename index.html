@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.44">
+<meta name="app-version" content="3.45">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -504,7 +504,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.44</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.45</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -584,7 +584,10 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
     <div class="flip-wrap" onclick="flip()">
       <div class="flip-inner" id="fi">
         <div class="cface front">
-          <div class="cface-lbl">Pergunta</div>
+          <div class="cface-lbl" style="display:flex;align-items:center;justify-content:space-between">
+            <span>Pergunta</span>
+            <button onclick="event.stopPropagation();editCurrentCardSection()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:9px;padding:2px 6px;cursor:pointer;font-family:'DM Mono',monospace">✎ seção</button>
+          </div>
           <div class="ctag" id="c-tag"></div>
           <div class="ctext" id="c-front"></div>
           <div class="chint">Toque para revelar ›</div>
@@ -1161,7 +1164,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.44';
+const CACHE = 'pscpp-v3.45';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1205,7 +1208,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.44';
+const CURRENT_VERSION = '3.45';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1966,6 +1969,36 @@ function moveAllCards(currentSec){
   alert('✓ '+count+' card(s) movidos para Seção '+newSec);
   document.getElementById('sec-modal').classList.remove('show');
   renderHome();renderDash();
+}
+
+
+function editCurrentCardSection(){
+  if(sI >= sQ.length) return;
+  const card = sQ[sI];
+  const sections = ['I','II','III','IV','V','VI','VII','MA'];
+  const labels = {
+    'I':'I — Manobrabilidade',
+    'II':'II — Arte Naval',
+    'III':'III — Navegação',
+    'IV':'IV — Legislação',
+    'V':'V — Meteorologia',
+    'VI':'VI — Comunicações',
+    'VII':'VII — Conhec. Gerais',
+    'MA':'MA — Mestre Amador'
+  };
+  const current = card.section;
+  const opts = sections.map(s => s + ': ' + labels[s]).join('\n');
+  const input = prompt('Seção atual: ' + current + '\n\nMover para qual seção?\n\n' + opts + '\n\nDigite a letra (ex: IV):');
+  if(!input) return;
+  const newSec = input.trim().toUpperCase();
+  if(!sections.includes(newSec)){ alert('Seção inválida.'); return; }
+  const allCards = getCards();
+  const idx = allCards.findIndex(c => c.id === card.id);
+  if(idx === -1) return;
+  allCards[idx].section = newSec;
+  sQ[sI].section = newSec;
+  set(K.cards, allCards);
+  alert('✓ Card movido para Seção ' + newSec);
 }
 
 function editCardSection(cardId){
@@ -2834,7 +2867,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.44'
+    exportDate:new Date().toISOString(),version:'v3.45'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
