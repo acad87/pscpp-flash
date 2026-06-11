@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.45">
+<meta name="app-version" content="3.46">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -153,7 +153,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .edital-2025{background:#3b82f618;color:#60a5fa;border:1px solid #3b82f628}
 .edital-2012{background:#f59e0b18;color:#fbbf24;border:1px solid #f59e0b28}
 .edital-ambos{background:#8b5cf618;color:#a78bfa;border:1px solid #8b5cf628}
-.ctext{font-size:13px;line-height:1.55;color:var(--white);flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ctext{font-size:13px;line-height:1.55;color:var(--white);flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .chint{font-size:10px;color:var(--muted);text-align:center;margin-top:14px;opacity:.6}
 .csrc{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--border);line-height:1.4}
 
@@ -167,7 +167,8 @@ body::before{content:'';position:fixed;inset:0;background:
 .re{background:#10b98118;color:var(--green);border:1px solid #10b98128}
 
 /* done */
-.done{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 18px;text-align:center;min-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* v3.46 BUG1: painel em fluxo normal (sem min-height:100dvh nem overlay fixed) — fiável no Safari iOS standalone */
+.done{display:none;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding:24px 18px 100px;text-align:center;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .done.show{display:flex}
 .done-ic{font-size:52px}
 .done-t{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
@@ -504,7 +505,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.45</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.46</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -911,6 +912,7 @@ RESULTADO SESSÃO: [ACERTEI/ERREI/DÚVIDA]<br>
       </div>
       <div class="cfg-row">
         <label>Importar</label>
+        <div class="cfg-hint">Com banco vazio: restaura tudo. Com cards existentes: mescla e detecta duplicados.</div>
         <input type="file" id="imp-file" accept=".json" style="display:none" onchange="doImport(event)">
         <button class="btn btn-s" style="margin-top:6px" onclick="document.getElementById('imp-file').click()">Importar JSON</button>
       </div>
@@ -1164,7 +1166,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.45';
+const CACHE = 'pscpp-v3.46';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1208,7 +1210,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.45';
+const CURRENT_VERSION = '3.46';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1423,7 +1425,8 @@ function showCfg(){
   document.getElementById('cfg-week').value=c.week||'1';
   document.getElementById('cfg-trim-cur').value=c.trimCur||'T1';
 }
-function goHome(){const done=document.getElementById('done');done.style.cssText='';done.classList.remove('show');document.getElementById('bnav').style.display='flex';showHome();}
+// v3.46 BUG1: removeAttribute('style') limpa estilos inline residuais de versões antigas
+function goHome(){const done=document.getElementById('done');done.removeAttribute('style');done.classList.remove('show');document.getElementById('bnav').style.display='flex';showHome();}
 
 function populateWeekSelects(){
   ['cfg-week','add-week'].forEach(id=>{
@@ -1514,7 +1517,7 @@ function startStudyWithPool(pool, limit){
   if(limit && limit > 0 && limit < sorted.length) sorted = sorted.slice(0, limit);
   sQ=sorted;sI=0;sSt={e:0,m:0,h:0};sWeak=[];
   document.getElementById('study-ttl').textContent='Sessão';
-  document.getElementById('done').classList.remove('show');
+  const _d1=document.getElementById('done');_d1.classList.remove('show');_d1.removeAttribute('style'); // v3.46 BUG1
   document.getElementById('card-area').style.display='flex';
   document.getElementById('rrow').classList.remove('show');
   document.getElementById('bnav').style.display='none';
@@ -1537,7 +1540,7 @@ function startStudy(sec,forceAll,limit){
   if(limit && limit > 0 && limit < pool.length) pool = pool.slice(0, limit);
   sQ=pool;sI=0;sSt={e:0,m:0,h:0};sWeak=[];
   document.getElementById('study-ttl').textContent=sec==='all'?'Revisão geral':'Seção '+sec;
-  document.getElementById('done').classList.remove('show');
+  const _d2=document.getElementById('done');_d2.classList.remove('show');_d2.removeAttribute('style'); // v3.46 BUG1
   document.getElementById('card-area').style.display='flex';
   document.getElementById('rrow').classList.remove('show');
   document.getElementById('bnav').style.display='none';
@@ -1546,15 +1549,19 @@ function startStudy(sec,forceAll,limit){
 }
 
 // Format question text — splits A) B) C) D) E) alternatives onto new lines
+// v3.46 BUG2: aceita "(A)", "A.", minúsculas e alternativas coladas à pontuação ("...:A) texto").
+// Corrige também o regex de numerais romanos — o padrão antigo (I{1,3}V?|VI{0,3}) fazia match
+// de "V" isolado e de string vazia, reescrevendo pontuação e corrompendo o enunciado.
 function formatQText(text){
   if(!text)return '';
   // Already has newlines before options — preserve them
-  if(/\n[A-E][.)]/m.test(text)) return text;
-  // Inline options: insert newline before A) B) C) D) E)
-  if(/[A-E][.)]/m.test(text)){
+  if(/\n\s*\(?[A-Ea-e][.)]/.test(text)) return text;
+  // Inline options: insert newline before A) B) C) D) E) / (A) (B) / A. B.
+  if(/\(?[A-E][.)]/.test(text)){
     return text
-      .replace(/([.:?])?\s+([A-E][.)]\s)/g,'$1\n$2')
-      .replace(/([.:?])?\s+(I{1,3}V?|VI{0,3})[.)]/g,'$1\n$2)')
+      .replace(/([.:;?…])?[ \t]+(\(?[A-E][.)][ \t]?)/g,'$1\n$2')
+      .replace(/([.:;?…])(\(?[A-E]\)[ \t]?)/g,'$1\n$2')
+      .replace(/([.:;?…])?[ \t]+((?:VI{0,3}|IV|I{1,3})[.)][ \t])/g,'$1\n$2')
       .trim();
   }
   return text;
@@ -1563,8 +1570,8 @@ function setFormattedText(el,text){
   el.innerHTML='';
   const lines=formatQText(text).split('\n');
   lines.forEach((line,i)=>{
-    const isAlt=/^[A-E][.)]\s/.test(line.trim());
-    const isRoman=/^(I{1,3}V?|VI{0,3})[.)]\s/.test(line.trim());
+    const isAlt=/^\(?[A-Ea-e][.)]\s?/.test(line.trim()); // v3.46 BUG2
+    const isRoman=!isAlt&&/^(?:VI{0,3}|IV|I{1,3})[.)]\s/.test(line.trim());
     const span=document.createElement('div');
     span.style.cssText=isAlt
       ?'padding:3px 0 3px 4px;border-left:2px solid var(--teal);margin:3px 0;font-size:13px;color:var(--white);line-height:1.45'
@@ -1696,6 +1703,9 @@ function renderEvocList(cards){
   });
 }
 
+// v3.46 BUG2: a altura do card é limitada à área visível (card-area). Cards longos
+// (enunciado + 5 alternativas) deixam de transbordar a viewport — o conteúdo
+// passa a fazer scroll dentro de .ctext (overflow-y:auto).
 function adjustCardHeight(){
   const fi = document.getElementById('fi');
   if(!fi) return;
@@ -1706,9 +1716,13 @@ function adjustCardHeight(){
   const activeFace = isFlipped ? faces[1] : faces[0];
   // Temporarily make it relative to measure
   activeFace.style.position = 'relative';
-  const h = Math.max(260, activeFace.scrollHeight + 20);
+  const natural = Math.max(260, activeFace.scrollHeight + 20);
   activeFace.style.position = '';
-  fi.style.height = h + 'px';
+  const area = document.getElementById('card-area');
+  const maxH = (area && area.clientHeight > 0)
+    ? Math.max(240, area.clientHeight - 8)
+    : Math.round(window.innerHeight * 0.72);
+  fi.style.height = Math.min(natural, maxH) + 'px';
 }
 
 function renderCard(){
@@ -1741,7 +1755,9 @@ function renderCard(){
   setFormattedText(document.getElementById('c-front'),_v.front);
   setFormattedText(document.getElementById('c-back'), c.back);
   document.getElementById('c-src').textContent=c.source?'Fonte: '+c.source:'';
+  // v3.46 BUG2: medir duas vezes — após o layout e após o carregamento das webfonts
   setTimeout(adjustCardHeight, 30);
+  setTimeout(adjustCardHeight, 300);
   document.getElementById('ri-h').textContent=previewInterval(c.id,1);
   document.getElementById('ri-m').textContent=previewInterval(c.id,2);
   document.getElementById('ri-e').textContent=previewInterval(c.id,3);
@@ -1773,14 +1789,13 @@ function finishStudy(){
   document.getElementById('pbar').style.width='100%';
   document.getElementById('ptxt').textContent=tot+' / '+tot;
 
-  // Hide everything except done panel
+  // v3.46 BUG1: sem overlay position:fixed/cssText — o painel done é um filho normal
+  // do ecrã (flex:1, scroll próprio via CSS), o que funciona de forma fiável no iOS standalone.
   document.getElementById('card-area').style.display='none';
   document.getElementById('rrow').classList.remove('show');
-  document.getElementById('bnav').style.display='none';
 
-  // Force done panel visible as fixed overlay
   const done=document.getElementById('done');
-  done.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px 18px;text-align:center;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch';
+  done.removeAttribute('style'); // limpar estilos inline residuais de versões antigas
 
   // Session review — show weak cards
   const reviewWrap=document.getElementById('session-review-wrap');
@@ -1821,12 +1836,12 @@ function finishStudy(){
   if(_log.length>50)_log.pop();
   set(K.log,_log);
 
-  console.log('adding show to done');
-  document.getElementById('done').classList.add('show');
+  done.classList.add('show');
   document.getElementById('bnav').style.display='flex';
   // Scroll to top so done panel is visible
-  window.scrollTo(0,0);
+  done.scrollTop=0;
   document.getElementById('s-study').scrollTop=0;
+  window.scrollTo(0,0);
 }
 
 function retryErrors(){
@@ -1834,7 +1849,7 @@ function retryErrors(){
   if(!errorCards.length)return;
   sQ=errorCards.sort(()=>Math.random()-.5);
   sI=0;sSt={e:0,m:0,h:0};sWeak=[];
-  document.getElementById('done').classList.remove('show');
+  const _d3=document.getElementById('done');_d3.classList.remove('show');_d3.removeAttribute('style'); // v3.46 BUG1
   document.getElementById('card-area').style.display='flex';
   document.getElementById('rrow').classList.remove('show');
   renderCard();
@@ -2557,6 +2572,71 @@ Responda APENAS JSON array sem nenhum texto adicional:
 [{"front":"...","back":"...","source":"...","dificuldade":"INTERMEDIARIA","resultado_sessao":"DUVIDA","section":"II"}]`;
 }
 
+// ── v3.46: genSim() implementado — o botão "🎯 Questão simulado" chamava uma função
+// inexistente na v3.45 (ReferenceError silencioso; buildSimPrompt nunca era usado).
+// Fluxo igual ao genFlash: template ---Q--- com ALTERNATIVAS+GABARITO → createSimQ;
+// senão gera via Claude API com buildSimPrompt. Salva direto no banco de simulado.
+async function genSim(){
+  const fields=getAddFields();
+  const text=document.getElementById('add-text').value.trim();
+  const cfg=getCfg();
+
+  // Try template parse first (works offline, no API needed)
+  if(text&&text.includes('---Q---')){
+    const parsed=parseTemplate(text,fields);
+    const withAlts=(parsed||[]).filter(p=>p.options&&p.options.length>=2&&p.gabarito);
+    if(withAlts.length){
+      const qs=withAlts.map(p=>createSimQ(p,fields));
+      const sims=getSimQs();
+      set(K.simq,[...sims,...qs]);
+      alert('✓ '+qs.length+' questão(ões) de simulado salvas!');
+      clearPrev();renderHome();
+      return;
+    }
+  }
+
+  if(!cfg.apiKey){alert('Configure a chave API em Config.');showCfg();return;}
+  if(!text&&!photoBase64){alert('Cole um texto ou tire uma foto primeiro.');return;}
+
+  const ind=document.getElementById('gen-ind');const btn=event.target;
+  ind.classList.add('on');btn.disabled=true;
+  try{
+    const systemPrompt=buildSimPrompt(fields);
+    let messages;
+    if(photoBase64){
+      messages=[{role:'user',content:[
+        {type:'image',source:{type:'base64',media_type:'image/jpeg',data:photoBase64}},
+        {type:'text',text:systemPrompt}
+      ]}];
+    }else{
+      messages=[{role:'user',content:systemPrompt+'\n\nTEXTO BASE:\n'+text}];
+    }
+    const raw=await callClaude(messages,3000);
+    const qs=parseJSON(raw).map(q=>({
+      id:'sq_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
+      section:fields.section||q.section||'II',
+      secao:fields.section||q.section||'II',
+      semana:fields.semana,
+      trimestre:fields.trimestre,
+      edital:fields.edital,
+      question:q.question,
+      // strip "A: " / "A) " prefixes — the renderer already adds the letters
+      options:(q.options||[]).map(o=>String(o).replace(/^[A-E][:.)]\s*/,'').trim()),
+      correct:typeof q.correct==='number'?q.correct:0,
+      gabarito_index:typeof q.correct==='number'?q.correct:0,
+      fonte:q.fonte||fields.material||'',
+      dificuldade:q.dificuldade||'INTERMEDIÁRIA',
+      createdAt:Date.now()
+    }));
+    if(!qs.length){alert('Nenhuma questão gerada.');return;}
+    const sims=getSimQs();
+    set(K.simq,[...sims,...qs]);
+    alert('✓ '+qs.length+' questão(ões) de simulado salvas!');
+    clearPrev();renderHome();
+  }catch(e){alert('Erro: '+e.message);}
+  finally{ind.classList.remove('on');btn.disabled=false;}
+}
+
 function buildSimPrompt(fields){
   const padroes=`PADRÕES DAS PROVAS PSCPP 2011/2012:
 - 40% formato análise de afirmativas (V/F ou "estão corretas")
@@ -2648,11 +2728,37 @@ function showPrev(cards){
   area.style.display='block';
 }
 function clearPrev(){pending=[];document.getElementById('preview-area').style.display='none';document.getElementById('add-text').value='';photoBase64=null;document.getElementById('photo-preview').style.display='none';}
+// ── F1 (v3.46): detecção de duplicados ao salvar cards gerados
+// Compara o enunciado (front) normalizado com o banco existente.
+function normFront(t){return String(t||'').toLowerCase().replace(/\s+/g,' ').trim();}
+
 function savePrev(){
   if(!pending.length)return;
-  const c=getCards();
-  set(K.cards,[...c,...pending]);
-  alert(`✓ ${pending.length} card(s) salvos!`);
+  const cards=getCards();
+  const existing=new Map(cards.map(c=>[normFront(c.front),c]));
+  const dups=pending.filter(p=>existing.has(normFront(p.front)));
+  let toAdd=pending,replaced=0,skipped=0;
+  if(dups.length){
+    const doReplace=confirm(dups.length+' card(s) com enunciado já existente no banco.\n\nOK = SUBSTITUIR o conteúdo dos existentes (mantém o progresso SM-2)\nCancelar = IGNORAR os duplicados (salva só os novos)');
+    if(doReplace){
+      dups.forEach(p=>{
+        const ex=existing.get(normFront(p.front));
+        ['back','source','section','semana','trimestre','edital','dificuldade','subsec','material','resultado_sessao'].forEach(f=>{
+          if(p[f]!==undefined&&p[f]!=='')ex[f]=p[f];
+        });
+      });
+      replaced=dups.length;
+    } else {
+      skipped=dups.length;
+    }
+    // createCard() já gravou entradas SM-2 para os pendentes — limpar as órfãs dos duplicados
+    const prog=getProg();let dirty=false;
+    dups.forEach(p=>{if(prog[p.id]){delete prog[p.id];dirty=true;}});
+    if(dirty)set(K.prog,prog);
+    toAdd=pending.filter(p=>!existing.has(normFront(p.front)));
+  }
+  set(K.cards,[...cards,...toAdd]);
+  alert('✓ '+toAdd.length+' card(s) novos salvos'+(replaced?' · '+replaced+' substituído(s)':'')+(skipped?' · '+skipped+' duplicado(s) ignorado(s)':''));
   clearPrev();renderHome();
 }
 
@@ -2867,7 +2973,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.45'
+    exportDate:new Date().toISOString(),version:'v3.46'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -2890,21 +2996,91 @@ function doExportKassio(){
   a.href=url;a.download='pscpp_deck_kassio_'+new Date().toISOString().split('T')[0]+'.json';a.click();
 }
 
+// ═══════════════════════════════════════
+// F3 (FUTURO) — Publicar deck para o Kássio via GitHub (cards.json)
+// Preparado mas NÃO implementado nesta versão. Plano:
+//  - cfg.ghToken: fine-grained PAT com escopo contents:write no repo acad87/pscpp-flash
+//  - GET https://api.github.com/repos/acad87/pscpp-flash/contents/cards.json → obter sha actual
+//  - PUT no mesmo endpoint com {message, content: btoa(JSON do deck limpo), sha}
+//  - O app do Kássio faria fetch de cards.json no arranque e mostraria "importar novidades"
+// async function publishDeckToGitHub(){ /* não implementado */ }
+// ═══════════════════════════════════════
+
+// ── F1 (v3.46): import inteligente.
+// Banco vazio → restauro total (comportamento original).
+// Banco com cards → merge: detecta duplicados por enunciado, pergunta se substitui ou ignora;
+// progresso SM-2 só é importado para cards novos (nunca sobrepõe o progresso local).
 function doImport(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
       const d=JSON.parse(ev.target.result);
-      if(d.cards)set(K.cards,d.cards);
-      if(d.simqs)set(K.simq,d.simqs);
-      if(d.progress&&Object.keys(d.progress).length>0)set(K.prog,d.progress);
-      if(d.trim&&d.trim.length)set(K.trim,d.trim);
-      if(d.sh)set(K.sh,d.sh);
-      if(d.log&&d.log.length)set(K.log,d.log);
-      alert(`✓ Importado!\n${(d.cards||[]).length} cards\n${(d.simqs||[]).length} questões de simulado`);
+      const local=getCards();
+
+      if(!local.length){
+        // Banco vazio — restauro total
+        if(d.cards)set(K.cards,d.cards);
+        if(d.simqs)set(K.simq,d.simqs);
+        if(d.progress&&Object.keys(d.progress).length>0)set(K.prog,d.progress);
+        if(d.trim&&d.trim.length)set(K.trim,d.trim);
+        if(d.sh)set(K.sh,d.sh);
+        if(d.log&&d.log.length)set(K.log,d.log);
+        alert(`✓ Importado!\n${(d.cards||[]).length} cards\n${(d.simqs||[]).length} questões de simulado`);
+        renderHome();
+        e.target.value='';
+        return;
+      }
+
+      // Banco com cards — merge com detecção de duplicados
+      const incoming=Array.isArray(d.cards)?d.cards:[];
+      const existing=new Map(local.map(c=>[normFront(c.front),c]));
+      const dups=incoming.filter(c=>existing.has(normFront(c.front)));
+      const novos=incoming.filter(c=>!existing.has(normFront(c.front)));
+
+      let replaced=0,skipped=0;
+      if(dups.length){
+        const doReplace=confirm(dups.length+' card(s) do ficheiro já existem no banco (mesmo enunciado).\n\nOK = SUBSTITUIR o conteúdo dos existentes (mantém o teu progresso SM-2)\nCancelar = IGNORAR os duplicados (importa só os novos)');
+        if(doReplace){
+          dups.forEach(inc=>{
+            const ex=existing.get(normFront(inc.front));
+            ['back','source','section','semana','trimestre','edital','dificuldade','subsec','material','resultado_sessao'].forEach(f=>{
+              if(inc[f]!==undefined&&inc[f]!=='')ex[f]=inc[f];
+            });
+          });
+          replaced=dups.length;
+        } else {
+          skipped=dups.length;
+        }
+      }
+      set(K.cards,[...local,...novos]);
+
+      // Progresso SM-2: só para cards novos — nunca sobrepor o progresso local
+      if(d.progress&&Object.keys(d.progress).length>0){
+        const prog=getProg();
+        const novosIds=new Set(novos.map(c=>c.id));
+        Object.entries(d.progress).forEach(([id,p])=>{
+          if(novosIds.has(id)&&!prog[id])prog[id]=p;
+        });
+        set(K.prog,prog);
+      }
+
+      // Questões de simulado: append deduplicado por enunciado
+      let simNovas=0;
+      if(Array.isArray(d.simqs)&&d.simqs.length){
+        const sims=getSimQs();
+        const simSet=new Set(sims.map(q=>normFront(q.question||q.enunciado)));
+        d.simqs.forEach(q=>{
+          const key=normFront(q.question||q.enunciado);
+          if(key&&!simSet.has(key)){sims.push(q);simSet.add(key);simNovas++;}
+        });
+        set(K.simq,sims);
+      }
+
+      alert('✓ Mesclado!\n'+novos.length+' card(s) novos'+(replaced?' · '+replaced+' substituído(s)':'')+(skipped?' · '+skipped+' duplicado(s) ignorado(s)':'')+(simNovas?'\n'+simNovas+' questão(ões) de simulado novas':''));
       renderHome();
     }catch{alert('Arquivo inválido.');}
+    e.target.value='';
   };
   reader.readAsText(file);
 }
