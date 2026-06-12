@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.48">
+<meta name="app-version" content="3.49">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -505,7 +505,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.48</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.49</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -596,6 +596,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
         <div class="cface back">
           <div class="cface-lbl">Resposta</div>
           <div class="ctext" id="c-back"></div>
+          <div id="c-comment" style="display:none;margin-top:12px;padding:10px 12px;background:#0d948812;border-left:3px solid var(--teal);border-radius:0 8px 8px 0"></div>
           <div class="csrc" id="c-src"></div>
         </div>
       </div>
@@ -1166,7 +1167,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.48';
+const CACHE = 'pscpp-v3.49';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1210,7 +1211,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.48';
+const CURRENT_VERSION = '3.49';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1754,6 +1755,17 @@ function renderCard(){
   const _v=getCardVariant(c);
   setFormattedText(document.getElementById('c-front'),_v.front);
   setFormattedText(document.getElementById('c-back'), c.back);
+  const comentEl = document.getElementById('c-comment');
+  if(comentEl){
+    if(c.comentario){
+      comentEl.style.display='block';
+      comentEl.innerHTML = '<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--teal2);text-transform:uppercase;margin-bottom:6px">📖 Contexto</div>' +
+        '<div style="font-size:12px;line-height:1.55;color:var(--muted)">' + c.comentario.replace(/
+/g,'<br>') + '</div>';
+    } else {
+      comentEl.style.display='none';
+    }
+  }
   document.getElementById('c-src').textContent=c.source?'Fonte: '+c.source:'';
   // v3.46 BUG2: medir duas vezes — após o layout e após o carregamento das webfonts
   setTimeout(adjustCardHeight, 30);
@@ -2504,7 +2516,7 @@ function parseTemplate(text, fields){
 
     if(pergunta&&resposta){
       const _det=fields.section?fields.section:detectSection(pergunta+' '+resposta+' '+fonte);
-      results.push({pergunta,resposta,fonte,dific,resultado,options,gabarito,subsec,detectedSec:_det});
+      results.push({pergunta,resposta,fonte,dific,resultado,options,gabarito,subsec,comentario,detectedSec:_det});
     }
   });
   return results.length?results:null;
@@ -2555,6 +2567,7 @@ async function genFlash(){
       back:c.back,
       source:c.source||fields.material||'',
       subsec:c.subsec||fields.subsec||'',
+      comentario:c.comentario||p.comentario||'',
       createdAt:Date.now()
     }));
     showPrev(pending);
@@ -2705,6 +2718,7 @@ function createCard(p, fields, tipo){
     back:p.resposta,
     source:p.fonte||fields.material||'',
     subsec:p.subsec||fields.subsec||'',
+    comentario:p.comentario||'',
     createdAt:Date.now()
   };
 }
@@ -2995,7 +3009,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.48'
+    exportDate:new Date().toISOString(),version:'v3.49'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
