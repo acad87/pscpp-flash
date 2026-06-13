@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.49">
+<meta name="app-version" content="3.50">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -505,7 +505,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.49</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.50</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -1167,7 +1167,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.49';
+const CACHE = 'pscpp-v3.50';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1211,7 +1211,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.49';
+const CURRENT_VERSION = '3.50';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1759,9 +1759,7 @@ function renderCard(){
   if(comentEl){
     if(c.comentario){
       comentEl.style.display='block';
-      comentEl.innerHTML = '<div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--teal2);text-transform:uppercase;margin-bottom:6px">📖 Contexto</div>' +
-        '<div style="font-size:12px;line-height:1.55;color:var(--muted)">' + c.comentario.replace(/
-/g,'<br>') + '</div>';
+      comentEl.innerHTML = `<div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--teal2);text-transform:uppercase;margin-bottom:6px">📖 Contexto</div><div style="font-size:12px;line-height:1.55;color:var(--muted)">${c.comentario.replace(/\n/g,'<br>')}</div>`;
     } else {
       comentEl.style.display='none';
     }
@@ -2505,6 +2503,7 @@ function parseTemplate(text, fields){
     const resultado=get('RESULTADO SESSÃO')||'DÚVIDA';
     const gabarito=get('GABARITO');
     const subsec=get('SUBSEÇÃO')||get('SUBSECAO')||get('SUBTEMA')||fields.subsec||'';
+    const comentario=get('COMENTÁRIO')||get('COMENTARIO')||get('COMMENT')||'';
 
     // Check for alternativas
     const altMatch=content.match(/ALTERNATIVAS:([\s\S]+?)(?=GABARITO:|FONTE:|DIFICULDADE:|RESULTADO|---)/i);
@@ -2516,7 +2515,7 @@ function parseTemplate(text, fields){
 
     if(pergunta&&resposta){
       const _det=fields.section?fields.section:detectSection(pergunta+' '+resposta+' '+fonte);
-      results.push({pergunta,resposta,fonte,dific,resultado,options,gabarito,subsec,comentario,detectedSec:_det});
+      results.push({pergunta,resposta,fonte,dific,resultado,options,gabarito,subsec,comentario,comentario,detectedSec:_det});
     }
   });
   return results.length?results:null;
@@ -3009,7 +3008,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.49'
+    exportDate:new Date().toISOString(),version:'v3.50'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
