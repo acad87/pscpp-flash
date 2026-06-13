@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#080d1a">
 <title>PSCPP Flash</title>
-<meta name="app-version" content="3.52">
+<meta name="app-version" content="3.54">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════
@@ -144,7 +144,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .flip-inner{position:relative;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.4,0,.2,1);min-height:260px;width:100%}
 .flip-inner.flipped{transform:rotateY(180deg)}
 .cface{position:absolute;inset:0;background:var(--card);border:1px solid var(--border);border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;padding:22px 20px;min-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.cface.back{transform:rotateY(180deg);border-color:var(--teal)}
+.cface.back{transform:rotateY(180deg);border-color:var(--teal);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .cface-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--teal2);text-transform:uppercase;margin-bottom:10px}
 .cface.back .cface-lbl{color:var(--amber)}
 .ctag{display:inline-flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
@@ -505,7 +505,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
 <!-- ═══════════ HOME ═══════════ -->
 <div class="screen active" id="s-home">
   <div class="topbar">
-    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.52</span></div>
+    <div class="logo">PSCPP<span>·</span>Flash <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">v3.54</span></div>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="chip" id="update-chip" onclick="checkForUpdateManual()" title="Verificar atualização">↻</div>
       <div class="chip" id="user-chip" onclick="showCfg()">Config ⚙</div>
@@ -596,7 +596,7 @@ textarea{resize:vertical;min-height:90px;line-height:1.6}
         <div class="cface back">
           <div class="cface-lbl">Resposta</div>
           <div class="ctext" id="c-back"></div>
-          <div id="c-comment" style="display:none;margin-top:12px;padding:10px 12px;background:#0d948812;border-left:3px solid var(--teal);border-radius:0 8px 8px 0"></div>
+          <div id="c-comment" style="display:none;margin-top:10px;padding:8px 10px;background:#ffffff08;border-top:1px solid var(--border);border-radius:0 0 12px 12px;flex-shrink:0"></div>
           <div class="csrc" id="c-src"></div>
         </div>
       </div>
@@ -1167,7 +1167,7 @@ function confirmLimit(){
 if('serviceWorker' in navigator){
   // Inline service worker as blob — no separate file needed
   const swCode = `
-const CACHE = 'pscpp-v3.52';
+const CACHE = 'pscpp-v3.54';
 self.addEventListener('install', e => {
   self.skipWaiting();
 });
@@ -1211,7 +1211,7 @@ self.addEventListener('fetch', e => {
 // ═══════════════════════════════════════
 // AUTO UPDATE CHECK
 // ═══════════════════════════════════════
-const CURRENT_VERSION = '3.52';
+const CURRENT_VERSION = '3.54';
 
 async function checkForUpdateManual(){
   const chip = document.getElementById('update-chip');
@@ -1766,7 +1766,7 @@ function renderCard(){
         .replace(/\n/g,'<br>')
         .replace(/ (I{1,3}V?|VI{0,3}) [éé]/g,'<br>$1 é')
         .replace(/ — (I{1,3}V?|VI{0,3}) /g,'<br>— $1 ');
-      comentEl.innerHTML = `<div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:1px;color:var(--teal2);text-transform:uppercase;margin-bottom:6px">📖 Contexto</div><div style="font-size:12px;line-height:1.6;color:var(--muted)">${comFormatted}</div>`;
+      comentEl.innerHTML = `<div style="font-size:11px;line-height:1.6;color:var(--muted)">${comFormatted}</div>`;
     } else {
       comentEl.style.display='none';
     }
@@ -3015,7 +3015,7 @@ function doExport(){
     cards:getCards(),simqs:getSimQs(),
     progress:getProg(),trim:getTrim(),
     sh:get(K.sh),log:get(K.log)||[],
-    exportDate:new Date().toISOString(),version:'v3.52'
+    exportDate:new Date().toISOString(),version:'v3.54'
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
